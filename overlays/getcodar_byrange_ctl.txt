@@ -1,0 +1,10 @@
+[2012,8,24,13,0]  #time
+[41.0,39.0,-71.0,-73.0] #latmax,latmin,lonmax,lonmin
+[1,1]  #number, interval hour
+[5]  #choose one url to get codar
+1,http://tashtego.marine.rutgers.edu:8080/thredds/dodsC/cool/codar/totals/macoora6km_fmrc/Macoora_6km_Totals_(FMRC)_best.ncd" 
+2,http://tashtego.marine.rutgers.edu:8080/thredds/dodsC/cool/codar/totals/sw06" 
+3,http://tashtego.marine.rutgers.edu:8080/thredds/dodsC/cool/codar/totals/macoora6km"          
+4,http://tashtego.marine.rutgers.edu:8080/thredds/dodsC/cool/codar/totals/macoora8km"   
+5,http://tds.marine.rutgers.edu:8080/thredds/dodsC/cool/codar/totals/macoora6km_clone"
+#this one work with getsst_codar,getcodar

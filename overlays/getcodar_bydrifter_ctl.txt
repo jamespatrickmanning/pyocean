@@ -1,0 +1,13 @@
+[2012,10,24,0,17]  #time like 2012,8,31,17,0
+[drift_udel_2012_1.txt]  # raw drifter filename
+[120340751]  #drift number like 128380741
+[1,50,50] #the num of picture, Time Interval (for the case of overlays option 5, it means total time of track in hour), step size (in the case of option 5, this is not read)
+[5]  #choose one url to get codar
+1,http://tashtego.marine.rutgers.edu:8080/thredds/dodsC/cool/codar/totals/macoora6km_fmrc/Macoora_6km_Totals_(FMRC)_best.ncd" 
+2,http://tashtego.marine.rutgers.edu:8080/thredds/dodsC/cool/codar/totals/sw06" 
+3,http://tashtego.marine.rutgers.edu:8080/thredds/dodsC/cool/codar/totals/macoora6km"          
+4,http://tashtego.marine.rutgers.edu:8080/thredds/dodsC/cool/codar/totals/macoora8km"   
+5,http://tashtego.marine.rutgers.edu:8080/thredds/dodsC/cool/codar/totals/macoora6km_clone"
+
+
+#This ctl file work with get_drifter,getsst_codar_drifter,gettrack_codar
