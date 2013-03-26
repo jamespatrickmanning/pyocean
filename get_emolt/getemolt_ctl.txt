@@ -1,0 +1,14 @@
+[1 0 0 1 0]
+[2008,1,1,0,1;2008,7,1,0,0]
+[10,200]
+[20,200]
+[4100,7200,4000,7100] #
+[PF01,DJ01]
+[1]
+
+The first line represent index of the following 5 line,'1' means picking,'0' means not.
+the 2nd line represent the period of date
+the 3rd line represent the range depth of sensor
+the 4th line represent the range depth of bottom
+the 5th line represent the range lat,lon of range:maxlat,maxlon,minlat,minlon
+the 5th line represent the sites you need, use "," to split
