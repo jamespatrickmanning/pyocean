@@ -80,7 +80,7 @@ def lon2str(deg):
 
 def nearlonlat(lon,lat,lonp,latp):
     """
-    i,min_dist=nearlonlat(lon,lat,lonp,latp)
+    i,min_dist=nearlonlat(lon,lat,lonp,latp) change
     find the closest node in the array (lon,lat) to a point (lonp,latp)
     input:
         lon,lat - np.arrays of the grid nodes, spherical coordinates, degrees
