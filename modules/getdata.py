@@ -22,7 +22,23 @@ def get_dataset(url):
     return dataset
 
 
+def getdrift_header():
+    # simple function that returns all ids in the drift_header table
+    url = 'http://gisweb.wh.whoi.edu:8080/dods/whoi/drift_header'
+    dataset = get_dataset(url)
+    id=map(int,dataset.drift_header.ID)
+    return id
 
+def getdrift_ids():
+    # simple function that returns all distinct ids in the drift_data table
+    # this takes a few minutes and is limited to 300000 until the server is
+    # restarted to pick up a 100000 "JDBCMaxResponseLength in web_sv.xml
+    url = 'http://gisweb.wh.whoi.edu:8080/dods/whoi/drift_data'
+    dataset = get_dataset(url)
+    print 'Note: It takes a minute or so to determine distinct ids'
+    ids=list(set(list(dataset.drift_data.ID)))
+    return ids
+    
 def getdrift(id):
     """
     uses pydap to get remotely stored drifter data given an id number
@@ -46,7 +62,7 @@ def getdrift(id):
     for i in range(len(yearday)):      
         datet.append(num2date(yearday[i]).replace(year=time.strptime(time0[i], '%Y-%m-%d').tm_year).replace(day=time.strptime(time0[i], '%Y-%m-%d').tm_mday))
     
-    return lat, lon, datet, dep, time0, yearday
+    return lat, lon, datet, dep
 
 
 def getcodar(url, datetime_wanted):
@@ -131,15 +147,16 @@ def getemolt_latlon(site):
     """
     get data from emolt_sensor 
     """
-    urllatlon = 'http://gisweb.wh.whoi.edu:8080/dods/whoi/emolt_site?emolt_site.SITE,emolt_site.LAT_DDMM,emolt_site.LON_DDMM,emolt_site.ORIGINAL_NAME&emolt_site.SITE='
+    urllatlon = 'http://gisweb.wh.whoi.edu:8080/dods/whoi/emolt_site?emolt_site.SITE,emolt_site.LAT_DDMM,emolt_site.LON_DDMM,emolt_site.ORIGINAL_NAME,emolt_site.BTM_DEPTH&emolt_site.SITE='
     dataset = open_url(urllatlon+'"'+site+'"')
     print dataset
     var = dataset['emolt_site']
     lat = list(var.LAT_DDMM)
     lon = list(var.LON_DDMM)
     original_name = list(var.ORIGINAL_NAME)
+    bd=list(var.BTM_DEPTH)
   
-    return lat[0], lon[0], original_name
+    return lat[0], lon[0], original_name,bd
 
 
 def getemolt_uv(site, input_time, dep):
