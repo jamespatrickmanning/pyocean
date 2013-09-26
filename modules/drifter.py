@@ -1,11 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.dates import num2date,date2num
-import datetime as dt
+from datetime import datetime as dt
 import matplotlib as mpl
 import csv
 import scipy
-import conversions
 from conversions import *
 
 
@@ -64,13 +63,13 @@ def read_drifter_file(filename):
   
     yearday_number = [float(i) for i in yearday]
     dti = list(np.diff(yearday_number)*24*60*60)#convert yearday_difference to seconds
-    dt = []
+    dt1 = []
     for dti in dti:
         dt.append(str(dti))
   
     lat=[float(i) for i in lat]  #the lat is number for calculate and plot
     jd=[float(i) for i in yearday] #the lon is number for calculate and plot
-    dt=[float(i) for i in dt]
+    dt1=[float(i) for i in dt1]
 
     dt_zero=scipy.array(dt)#convert list to array
     dt_zero_list=list(np.nonzero(dt_zero==0.0))#get location of the 0.0
@@ -79,7 +78,7 @@ def read_drifter_file(filename):
     zero=[]
     for zero_id in dt_zero_id:
         zero.append(dt[zero_id])#just get 0.0
-    dt=[val for val in dt if val not in zero]#if dt==0.0,del
+    dt1=[val for val in dt1 if val not in zero]#if dt==0.0,del
     dtime=[]
     for i in range(0,len(jd)):
         jd_date=num2date(jd[i])
@@ -111,8 +110,9 @@ def save_output_file(path_output_file_name, id, time0, lat, lon, yeardays):
     fido.close()
     
 #calculate the speed, when speed changed, plot the line use different colors
-def calculate_speedcolors(lat,lon,id,yearday):
+def calculate_speedcolors(lat,lon,datet):
     #calculate the speed 
+    yearday=date2num(datet)-date2num(dt(datet[0].year,1,1,0,0,0))
     speed=ll2uv(yearday,lat,lon)[2]
     #sort the speed and get the change index
     index=range(len(speed))
@@ -129,17 +129,20 @@ def calculate_speedcolors(lat,lon,id,yearday):
     return speed,speed_color
   
   
-def plot_speedcolors(id,speed,time0,speed_color,lat,lon):
+def plot_speedcolors(id,speed,time0,speed_color,lat,lon,ndays_to_annotate):
     # get the index when datetime.day change
     index_day=[]
     for i in range(1,len(time0)):
       if time0[i]<>time0[i-1]:
           index_day.append(i-1)
+    index_day= index_day[0:-1:ndays_to_annotate]    
     # change time format to get the month and day
     month_time,day_time=[],[]
     for i in time0:
-        month_time.append(dt.datetime.strptime(i,'%Y-%m-%d').month)
-        day_time.append(dt.datetime.strptime(i,'%Y-%m-%d').day)  
+        #month_time.append(dt.datetime.strptime(i,'%Y-%m-%d').month)
+        month_time.append(i.month)
+        #day_time.append(dt.datetime.strptime(i,'%Y-%m-%d').day)
+        day_time.append(i.day)
     fig = plt.figure()
     plt.title('Difter#'+id)
     ax = fig.add_subplot(111)
@@ -147,7 +150,8 @@ def plot_speedcolors(id,speed,time0,speed_color,lat,lon):
     plt.ylabel('Latitude N')
 
     for i in range(1,len(speed)):
-        plt.plot(lon[i-1:i+1],lat[i-1:i+1], '-',color=speed_color[i])
+        plt.plot(lon[i-1:i+1],lat[i-1:i+1], '-',color=speed_color[i-1],linewidth=3)
+    plt.plot(lon[-2:],lat[-2:], '-',color=speed_color[-1],linewidth=3)   
     # add text in the figure
     for i in index_day:
         ax.annotate(str(month_time[i])+"/"+str(day_time[i]), xy=(lon[i], lat[i]),  xycoords='data',
@@ -163,7 +167,7 @@ def plot_speedcolors(id,speed,time0,speed_color,lat,lon):
     #plot color bar
     cb2 = mpl.colorbar.ColorbarBase(ax2, norm=rawlins_norm,orientation='horizontal')
     #a=np.linspace(int(min(speed)),int(max(speed)),4)
-    #cb2.ax.set_xticks(np.linspace(min(speed),max(speed),))
-    cb2.ax.set_xticklabels(['8cm/s', '16cm/s','24cm/s', '32cm/s', '40cm/s', '48cm/s', '56cm/s', '64cm/s'])
+    cb2.ax.set_xticks(np.linspace(min(speed),max(speed),4))
+    #cb2.ax.set_xticklabels(['8cm/s', '16cm/s','24cm/s', '32cm/s', '40cm/s', '48cm/s', '56cm/s', '64cm/s'])
     plt.show()
 

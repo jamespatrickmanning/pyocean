@@ -140,6 +140,23 @@ def nearxy2(x,y,x0,y0): #returns both distance and index
            index.append(ii)
    return min(distance),index[0]
 
+def points_between(lat,lon,x):
+    """ 
+    For 2 positions, interpolate X number of points between them
+    where "lat" and "lon" are two element list
+    "x" is the number of points wanted between them
+    returns lat0,lono
+    """
+    print lat
+    lato=[]
+    lono=[]
+    lati=(lat[1]-lat[0])/float(x)
+    loni=(lon[1]-lon[0])/float(x)
+    for j in range(x):
+        lato.append(lat[0]+lati*j)
+        lono.append(lon[0]+loni*j)
+    return lato,lono
+
 def smooth(x,window_len=11,window='hanning'):
     """smooth the data using a window with requested size.
     

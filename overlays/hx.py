@@ -603,8 +603,8 @@ def plot_getsst(ask_input,utc,gbox):
   ma=np.nanmax(sst_part[0])
   rg=ma-mi
   mi=mi+rg*0.5 # adds 50 % of the range to account for cold cloud like pixels
-  CS = plt.contourf(X,Y,sst_part[0],np.arange(mi,ma,(ma-mi)/12.))
-  #CS = plt.contourf(X,Y,sst_part[0],np.arange(np.nanmin(sst_part[0])+2.0,np.nanmax(sst_part[0]),(np.nanmax(sst_part[0])-(np.nanmin(sst_part[0])+2.0))/6.))
+  #CS = plt.contourf(X,Y,sst_part[0],np.arange(mi,ma,(ma-mi)/12.))
+  CS = plt.contourf(X,Y,sst_part[0],np.arange(np.nanmin(sst_part[0])+2.0,np.nanmax(sst_part[0]),(np.nanmax(sst_part[0])-(np.nanmin(sst_part[0])+2.0))/6.))
   plt.colorbar(CS,format='%4.1f'+'C')
 
 def nearxy(x,y,x0,y0):

@@ -81,22 +81,22 @@ def dm2dd(lat,lon):
     """
     convert lat, lon from decimal degrees,minutes to decimal degrees
     """
-    (a,b)=divmod(float(lat),100)   
+    (a,b)=divmod(float(lat),100.)   
     aa=int(a)
     bb=float(b)
-    lat_value=aa+bb/60
+    lat_value=aa+bb/60.
 
     if float(lon)<0:
-        (c,d)=divmod(abs(float(lon)),100)
+        (c,d)=divmod(abs(float(lon)),100.)
         cc=int(c)
         dd=float(d)
-        lon_value=cc+(dd/60)
+        lon_value=cc+(dd/60.)
         lon_value=-lon_value
     else:
-        (c,d)=divmod(float(lon),100)
+        (c,d)=divmod(float(lon),100.)
         cc=int(c)
         dd=float(d)
-        lon_value=cc+(dd/60)
+        lon_value=cc+(dd/60.)
     return lat_value, -lon_value
 
 def dd2dms(lat,lon):
@@ -174,15 +174,45 @@ def depth(p, lat):
     return depth
 
 
+def distance(origin, destination):
+    """ 
+    Calculates both distance and bearing
+    """
+    lat1, lon1 = origin
+    lat2, lon2 = destination
+    radius = 6371 # km
+    
+
+    dlat = math.radians(lat2-lat1)
+    dlon = math.radians(lon2-lon1)
+    a = math.sin(dlat/2) * math.sin(dlat/2) + math.cos(math.radians(lat1)) \
+        * math.cos(math.radians(lat2)) * math.sin(dlon/2) * math.sin(dlon/2)
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    d = radius * c
+    
+    def calcBearing(lat1, lon1, lat2, lon2):
+       dLon = lon2 - lon1
+       y = math.sin(dLon) * math.cos(lat2)
+       x = math.cos(lat1) * math.sin(lat2) \
+           - math.sin(lat1) * math.cos(lat2) * math.cos(dLon)
+       return math.atan2(y, x)
+       
+    bear= math.degrees(calcBearing(lat1, lon1, lat2, lon2))  
+    return d,bear
+    
 def dist(lat1, lon1, lat2, lon2):
     """
     compute distance between two points
-    input: coordinate(lat,lon) of both points"
+    input: coordinate(lat,lon) of both points
+    Problem discovered May 2013
+    """
+    print 'WARNING: THIS DIST FUNCTION SHOULD BE REPLACED WITH DISTANCE'
     """
     if 1000 > lon1 > 0:
         (lat1,lon1) = dd2dm(lat1,lon1)
     if 1000 > lon2 > 0: 
         (lat2,lon2) = dd2dm(lat2,lon2)
+    """    
     pid180 = math.pi/180
     alat = (lat1)*pid180
     alon = (lon1)*pid180
@@ -234,7 +264,7 @@ def ll2uv(jd,lat,lon):#jd is yearday
    
     u,v,jdn,spd=[],[],[],[]
     for i in range(1,len(jd)):
-        (dkm,bear)=dist(lat[i-1],lon[i-1],lat[i],lon[i])
+        (dkm,bear)=distance([lat[i-1],lon[i-1]],[lat[i],lon[i]])
         u.append(sd2uv(float(dkm*100000)/diff_time_list[i-1],bear)[0])
         v.append(sd2uv(float(dkm*100000)/diff_time_list[i-1],bear)[1])
         spd.append(np.sqrt(u[i-1]**2+v[i-1]**2))

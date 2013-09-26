@@ -32,9 +32,9 @@ def get_FVCOM(url, dt1):
     for k in range(len(jd)):
         ymd = jd[k].split('-')
         d = dt.datetime(int(ymd[0]), int(ymd[1]), int(ymd[2][0:2]), int(ymd[2][3:5]), 0, 0)
-        if d > dt1:
-            dtime.append(d)
-            ids.append(k)
+        #if d > dt1:
+        dtime.append(d)
+        ids.append(k)
     
     u, v = [], []
     for k in ids:      

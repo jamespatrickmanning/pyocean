@@ -15,7 +15,8 @@ from hx import getcodar_ctl_file,plot_getsst
 from getdata import getdrift
 from basemap import basemap_standard
 drifter='pro' #"processed" or "raw"
-option='1'
+option='3' # what is "option 1"?
+
 def range_latlon(filename,driftnumber): # function neede in case of "raw" drifter date
   d=ml.load(filename)
   id=ml.find(d[:,0]==int(driftnumber))
@@ -31,17 +32,11 @@ utc = pytz.timezone('UTC')
 png_num=0 #for save picture
 #option=raw_input("If you have a file of column lat and lon,please input '1'\nIf you want to input points' location, please input '2'\n"
 #"If you want to use the control file,please input '3'\n")
-if option=='3':
-    inputfilename='getcodar_bydrifter_ctl.txt' #default control file
-    (datetime_wanted,filename,driftnumber,url,model_option,num,interval_dtime,interval,step_size)=getcodar_ctl_file(inputfilename)
-    if drifter=='raw':
-       maxlon,minlon,maxlat,minlat,lat,lon=range_latlon(filename,driftnumber)
-    else:
-       [lat, lon, datet, dep, time0, yearday]=getdrift(driftnumber) #uses pydap to get remote drifter data
-       maxlon=max(lon)
-       minlon=min(lon)
-       maxlat=max(lat)
-       minlat=min(lat)    
+if option=='1':
+    datetime_wanted=date2num(dt.datetime.strptime(raw_input("please input datetime you wanted, the format like: 2012,8,26,0,0\n"),'%Y,%m,%d,%H,%M'))
+    filename=raw_input('Please input your file path and name:\n')
+    maxlon,minlon,maxlat,minlat,lat,lon=range_latlon(filename)
+
 if option=='2':
     datetime_wanted=date2num(dt.datetime.strptime(raw_input("please input datetime you wanted, the format like: 2012,8,26,0,0\n"),'%Y,%m,%d,%H,%M'))
     lat_list=raw_input("Please input points SW & NE latitude in order,and split them by ',':")
@@ -56,10 +51,18 @@ if option=='2':
     minlon=min(lon1)
     maxlat=max(lat1)
     minlat=min(lat1)  
-if option=='1':
-    datetime_wanted=date2num(dt.datetime.strptime(raw_input("please input datetime you wanted, the format like: 2012,8,26,0,0\n"),'%Y,%m,%d,%H,%M'))
-    filename=raw_input('Please input your file path and name:\n')
-    maxlon,minlon,maxlat,minlat,lat,lon=range_latlon(filename)
+
+if option=='3':
+    inputfilename='getcodar_bydrifter_ctl.txt' #default control file
+    (datetime_wanted,filename,driftnumber,url,model_option,num,interval_dtime,interval,step_size)=getcodar_ctl_file(inputfilename)
+    if drifter=='raw':
+       maxlon,minlon,maxlat,minlat,lat,lon=range_latlon(filename,driftnumber)
+    else:
+       [lat, lon, datet, dep, time0, yearday]=getdrift(driftnumber) #uses pydap to get remote drifter data
+       maxlon=max(lon)
+       minlon=min(lon)
+       maxlat=max(lat)
+       minlat=min(lat)    
 
 
 #make sure the picture can show lat and lon clearly

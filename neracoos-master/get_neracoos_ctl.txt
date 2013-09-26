@@ -1,0 +1,13 @@
+[1 1 1 1]
+[2003,1,1,0,0;2004,3,1,23,59]
+[sbe37]   #like met,sbe37,sbe16,aanderaa
+[40,60]
+[E01]   # like  A01,F01
+
+
+The first line represent index of the following 5 line,'1' means picking,'0' means not.
+the 2nd line represent the period of date
+the 3rd line represent the range depth of sensor,  frist min,seconed max. (Ignored in wind case.) 
+the 4th line represent the mooring type ,'met' for wind,'sbe' for temperature, 'aanderaa' for current
+the 5th line represent the mooring, use "," to split
+

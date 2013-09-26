@@ -63,16 +63,8 @@ def getemolt_depth(b_mindepth,b_maxdepth,lat_max,lon_max,lat_min,lon_min,site1):
 	           print 'Sorry, '+url+' not available' 
 	           sys.exit(0)
     emolt_site=dataset['emolt_site']
-    try:   
-	          sites=list(emolt_site['SITE'])
-    except:
-	          print "'Sorry, According to your input, here are no value. please check it! ' "
-	          sys.exit(0)   
     sites=list(emolt_site['SITE'])
-    depth_b=list(emolt_site['BTM_DEPTH'])
-    
-
-            
+    depth_b=list(emolt_site['BTM_DEPTH'])        
     lat_dd=list(emolt_site['LAT_DDMM'])
     lon_dd=list(emolt_site['LON_DDMM'])
     return sites,depth_b,lat_dd,lon_dd
@@ -88,12 +80,7 @@ def getemolt_sensor(mindtime1,maxdtime1,i_mindepth,i_maxdepth,site2,mindtime,max
 	           print 'Sorry, '+url2+' not available' 
 	           sys.exit(0)
 	  emolt_sensor=dataset1['emolt_sensor']
-	  try:   
-	          sites2=list(emolt_sensor['SITE'])
-	  except:
-	          print "'Sorry, According to your input, here are no value. please check it! ' "
-	          sys.exit(0) 
-	  #sites2=list(emolt_sensor['SITE'])
+	  sites2=list(emolt_sensor['SITE'])
 	  time=list(emolt_sensor['TIME_LOCAL'])
 	  yrday0=list(emolt_sensor['YRDAY0_LOCAL'])
 	  temp=list(emolt_sensor['TEMP'])
@@ -174,8 +161,7 @@ def getemolt_ctl(inputfilename):
    num=f.readline()
    num=int(num[0:num.index(']')].strip('['))
        
-   return  mindtime,maxdtime,i_mindepth,i_maxdepth,b_mindepth,b_maxdepth,lat_max,\
-lon_max,lat_min,lon_min,site,num
+   return  mindtime,maxdtime,i_mindepth,i_maxdepth,b_mindepth,b_maxdepth,lat_max,lon_max,lat_min,lon_min,site,num
 
 def emolt_plotting(yrday,depth,temp,time11,samesites0,ax,k,ave_temp0,rgbcolors):
     #"ax" you can do like fig = plt.figure() ; ax = fig.add_subplot(111)
