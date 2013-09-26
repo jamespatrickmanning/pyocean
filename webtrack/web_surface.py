@@ -9,6 +9,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
 from pydap.client import open_url
+
+
+
 def RungeKutta4_lonlat(lon,lat,Grid,u,v,tau):       
     lon1=lon*1.;          lat1=lat*1.;        urc1,v1=VelInterp_lonlat(lon1,lat1,Grid,u,v);  
     lon2=lon+0.5*tau*urc1;lat2=lat+0.5*tau*v1;urc2,v2=VelInterp_lonlat(lon2,lat2,Grid,u,v);
@@ -18,7 +21,7 @@ def RungeKutta4_lonlat(lon,lat,Grid,u,v,tau):
     lat=lat+tau/6.*(v1+2.*v2+2.*v3+v4); 
     uinterplation=  (urc1+2.*urc2+2.*urc3+urc4)/6    
     vinterplation= (v1+2.*v2+2.*v3+v4)/6
-    #print urc1,v1,urc2,v2,urc3,v3,urc4,v4
+   # print urc1,v1,urc2,v2,urc3,v3,urc4,v4
     return lon,lat,uinterplation,vinterplation   
 def nearxy(x,y,xp,yp):
     dx=x-xp
@@ -43,7 +46,6 @@ def polygonal_barycentric_coordinates(xp,yp,xv,yv):
     ja=(j+1)%N
     jb=(j-1)%N
     Ajab=np.cross(np.array([xv[ja]-xv[j],yv[ja]-yv[j]]).T,np.array([xv[jb]-xv[j],yv[jb]-yv[j]]).T)
-    #print "xv:"+str(xv),"yv:"+str(yv)
     Aj=np.cross(np.array([xv[j]-xp,yv[j]-yp]).T,np.array([xv[ja]-xp,yv[ja]-yp]).T)
     Aj=abs(Aj)
     Ajab=abs(Ajab)
@@ -53,7 +55,7 @@ def polygonal_barycentric_coordinates(xp,yp,xv,yv):
     j2=np.arange(N-2)
     for j in range(N):
         w[j]=Ajab[j]*Aj[(j2+j+1)%N].prod()
-        #print 'Ajab:'+str(Ajab),'Aj:'+str(Aj)
+      #  print Ajab[j],Aj[(j2+j+1)%N]
     w=w/w.sum()
     return w
 def VelInterp_lonlat(lonp,latp,Grid,u,v):    
@@ -67,14 +69,14 @@ def VelInterp_lonlat(lonp,latp,Grid,u,v):
     lonv=Grid['lonc'][kfv];latv=Grid['latc'][kfv] 
     w=polygonal_barycentric_coordinates(lonp,latp,lonv,latv)
 # baricentric coordinates are invariant wrt coordinate transformation (xy - lonlat), check!    
-    #print 'w'+str(w)
+#    print w
 # interpolation within polygon, w - normalized weights: w.sum()=1.    
 # use precalculated Lame coefficients for the spherical coordinates
 # coslatc[kfv] at the polygon vertices
 # essentially interpolate u/cos(latitude)
 # this is needed for RungeKutta_lonlat: dlon = u/cos(lat)*tau, dlat = vi*tau
     cv=Grid['coslatc'][kfv]
-    #print 'cv'+str(cv)    
+ #   print cv    
     urci=(u[kfv]/cv*w).sum()
     vi=(v[kfv]*w).sum()
         
@@ -100,9 +102,9 @@ def get_uv_web(time,layer):
         print times,layer
         return u,v
 TIME='2003-01-08 00:00:00' 
-numdays=3
-latd=43.7
-lond=-65.2
+numdays=30
+lond=-67
+latd=42
 depth=0
 latsize=[39,45]
 lonsize=[-72.,-66]
@@ -171,44 +173,15 @@ for i in range(startrecord,endrecord):
     vfinal.append(vinterplation)
     kv,distance=nearlonlat(lon,lat,lond,latd)
     print distance
-    if str(distance)=='nan':
-        print "now calculate reflecte point"
-        print lond,latd,kv,distance
-        point_x=lont[-2]
-        point_y=latt[-2]
-        origin_x=lont[-1]
-        origin_y=latt[-1]
-        x = point_x - origin_x
-        yorz = point_y - origin_y
-        newx1 = (x*np.cos(np.radians(90))) - (yorz*np.sin(np.radians(90)))
-        newx2 = (x*np.cos(np.radians(270))) - (yorz*np.sin(np.radians(270)))
-        newyorz1 = (x*np.sin(np.radians(90))) + (yorz*np.cos(np.radians(90)))
-        newyorz2 = (x*np.sin(np.radians(270))) + (yorz*np.cos(np.radians(270)))
-        newx1 += origin_x
-        newx2 += origin_x
-        newyorz1 += origin_y
-        newyorz2 += origin_y
-        fig=plt.figure(figsize=(7,6))
-        plt.plot(point_x,point_y,'bo',origin_x,origin_y,'b+',newx1,newyorz1,'mo',newx2,newyorz2,'mo')
-        kv1,distance1=nearlonlat(lon,lat,newx1,newyorz1)
-        kv2,distance2=nearlonlat(lon,lat,newx2,newyorz2)
-        if distance1<distance2:
-            lond=lon[kv1]
-            latd=lat[kv1]
-        else:
-            lond=lon[kv2]
-            latd=lat[kv2]
-        fig=plt.figure(figsize=(7,6))    
-        plt.plot(lon,lat,'r.',lonc,latc,'b+')
-        plt.plot(lont,latt,'ro-',lont[-1],latt[-1],'mo',lont[0],latt[0],'mo')
-    if distance>0.3:
-        break
+    if distance>=0.3:
+         break
     
-#fig=plt.figure(figsize=(7,6))    
-#plt.plot(lon,lat,'r.',lonc,latc,'b+')
-#plt.plot(lont,latt,'ro-',lont[-1],latt[-1],'mo',lont[0],latt[0],'mo')
-#plt.title('Web model map surface track '+' Time:'+TIME) 
-#plt.show()
+    
+fig=plt.figure(figsize=(7,6))    
+plt.plot(lon,lat,'r.',lonc,latc,'b+')
+plt.plot(lont,latt,'ro-',lont[-1],latt[-1],'mo',lont[0],latt[0],'mo')
+plt.title('Web model map surface track '+' Time:'+TIME) 
+plt.show()
 fig=plt.figure()     
 Q=plt.quiver(lont,latt,ufinal,vfinal,scale=5.)  
 plt.show() 
