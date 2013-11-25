@@ -43,6 +43,7 @@ def getdrift(id):
     """
     uses pydap to get remotely stored drifter data given an id number
     """
+    print 'using pydap'
     url = 'http://gisweb.wh.whoi.edu:8080/dods/whoi/drift_data'
     
     dataset = get_dataset(url) 
@@ -54,14 +55,23 @@ def getdrift(id):
         sys.exit(0)
         
     lon = list(dataset.drift_data[dataset.drift_data.ID == id].LON_DD)
-    time0 = list(dataset.drift_data[dataset.drift_data.ID == id].TIME_GMT)
+    year_month_day = list(dataset.drift_data[dataset.drift_data.ID == id].TIME_GMT)
     yearday = list(dataset.drift_data[dataset.drift_data.ID == id].YRDAY0_GMT)
     dep = list(dataset.drift_data[dataset.drift_data.ID == id].DEPTH_I)
     datet = []
     # use time0('%Y-%m-%d) and yearday to calculate the datetime
     for i in range(len(yearday)):      
-        datet.append(num2date(yearday[i]).replace(year=time.strptime(time0[i], '%Y-%m-%d').tm_year).replace(day=time.strptime(time0[i], '%Y-%m-%d').tm_mday))
+        #datet.append(num2date(yearday[i]).replace(year=time.strptime(time0[i], '%Y-%m-%d').tm_year).replace(day=time.strptime(time0[i], '%Y-%m-%d').tm_mday))
+        datet.append(num2date(yearday[i]+1.0).replace(year=dt.datetime.strptime(year_month_day[i], '%Y-%m-%d').year).replace(month=dt.datetime.strptime(year_month_day[i],'%Y-%m-%d').month).replace(day=dt.datetime.strptime(year_month_day[i],'%Y-%m-%d').day).replace(tzinfo=None))
     
+    print 'Sorting drifter data by time'
+    index = range(len(datet))
+    index.sort(lambda x, y:cmp(datet[x], datet[y]))
+    #reorder the list of date_time,u,v
+    datet = [datet[i] for i in index]
+    lat = [lat[i] for i in index]
+    lon = [lon[i] for i in index]
+    dep=[dep[i] for i in index]
     return lat, lon, datet, dep
 
 

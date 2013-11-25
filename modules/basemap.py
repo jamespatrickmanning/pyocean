@@ -8,7 +8,7 @@ from utilities import lat2str, lon2str
 
 #give the path for ob2 to import pydap
 #sys.path.append("/usr/local/lib/python2.7/dist-packages/Pydap-3.0.1-py2.7.egg")
-#from pydap.client import open_url
+from pydap.client import open_url
 #from mpl_toolkits.basemap import Basemap
 
 def adjustFigAspect(fig,aspect=1/1.3):
@@ -63,11 +63,12 @@ def basemap_standard(lat,lon,*parallels_interval):
         m.drawmeridians(np.arange(round(min(lon)-0.2,3),round(max(lon)+0.2,3),parallels_interval),labels=[0,0,0,1],fmt=lon2str,dashes=[2,2]) 
 
 
-def basemap_usgs(lat,lon,bathy):
+def basemap_usgs(lat,lon,bathy,draw_parallels,*parallels_interval):
     # plot the coastline and, if bathy is True, bathymetry is plotted
     # lat and lon can be any list of positions in decimal degrees
-
-    url='http://geoport.whoi.edu/thredds/dodsC/bathy/gom03_v03'
+    
+    #url='http://geoport.whoi.edu/thredds/dodsC/bathy/gom03_v03'
+    url='http://geoport.whoi.edu/thredds/dodsC/bathy/crm_vol1.nc'
     def get_index_latlon(url):# use the function to calculate the minlat,minlon,maxlat,maxlon location
         try:
           dataset=open_url(url)
@@ -98,7 +99,8 @@ def basemap_usgs(lat,lon,bathy):
     max_index_lat=max(index_minlat,index_maxlat)
     min_index_lon=min(index_minlon,index_maxlon)
     max_index_lon=max(index_minlon,index_maxlon)
-    if index_maxlat-index_minlat==0 or index_maxlon-index_minlon==0:
+    
+    if 1:#index_maxlat-index_minlat==0 or index_maxlon-index_minlon==0:
         print "Using http://geoport.whoi.edu/thredds/dodsC/bathy/crm_vol1.nc"
         url='http://geoport.whoi.edu/thredds/dodsC/bathy/crm_vol1.nc'
         try:
@@ -146,15 +148,34 @@ def basemap_usgs(lat,lon,bathy):
     #plt.ylim([min(lat),max(lat)])
     #plot the bathy
     if bathy==True:
-        plt.contourf(X,Y,basemap_topo.topo[min_index_lat:max_index_lat,index_minlon:index_maxlon],[-30, -20, -10, 0],colors=['yellow','blue','green','cyan'],linewith=0.05)
+        plt.contourf(X,Y,basemap_topo.topo[min_index_lat:max_index_lat,index_minlon:index_maxlon],[-5000,-1000,-200,-100],colors=['0.75','0.80','0.85','0.90'],linewith=0.05)
         #plt.clabel(CS, fontsize=7,fmt='%5.0f', inline=1)
     #plt.clabel(cs, fontsize=9, inline=1,fmt='%5.0f'+"m")
     if min_index_lat==max_index_lat:
         print "No basemap_usgs data available for this area"
-    #else:    
-        #plt.contourf(X,Y,basemap_topo.topo[min_index_lat:max_index_lat,min_index_lon:max_index_lon],[0,1000],colors='grey')
-    #plt.contourf(X,Y,basemap_topo.topo[min_index_lat:max_index_lat,min_index_lon:max_index_lon],[-90,-60],colors='black')
+    else:    
+        plt.contourf(X,Y,basemap_topo.topo[min_index_lat:max_index_lat,min_index_lon:max_index_lon],[0,1000],colors='black')
 
+    if draw_parallels==True:
+        
+      from mpl_toolkits.basemap import Basemap
+      m = Basemap(projection='cyl',llcrnrlat=min(lat),urcrnrlat=max(lat),\
+          llcrnrlon=min(lon),urcrnrlon=max(lon),resolution='h',suppress_ticks=True)#,fix_aspect=False)
+      #plt.set_xticklabels([])
+      #plt.set_yticklabels([])
+      if len(parallels_interval)<1:
+        parallels_interval=1
+        #draw parallels     
+        m.drawparallels(np.arange(int(min(lat)),int(max(lat)),float(parallels_interval)),labels=[1,0,0,0],fmt=lat2str,dashes=[2,2])
+        #draw meridians
+        m.drawmeridians(np.arange(int(min(lon)),int(max(lon)),float(parallels_interval)),labels=[0,0,0,1],fmt=lon2str,dashes=[2,2])     
+      else:
+        parallels_interval=parallels_interval[0]
+        #draw parallels
+        m.drawparallels(np.arange(round(min(lat),3),round(max(lat),3),parallels_interval),labels=[1,0,0,0],fmt=lat2str,dashes=[2,2])
+        #draw meridians
+        m.drawmeridians(np.arange(round(min(lon),3),round(max(lon),3),parallels_interval),labels=[0,0,0,1],fmt=lon2str,dashes=[2,2])         
+    
 
 #parallels_interval mean the interval of xaxis and yaxis,if parallels_interval=0.1 the min(lat)=40.15 max(lat)=40.35, the yaxis label will be 40.2, 40.3 
 #lat,lon should be list, if lat just has one value, the format is: lat=[43.5]
@@ -194,7 +215,7 @@ def basemap_detail(lat,lon,bathy,draw_parallels,*parallels_interval):
           dataset=open_url(url)
         except:
           print "please check your url!"
-        sys.exit(0)
+          sys.exit(0)
         basemap_lat=dataset['lat']
         basemap_lon=dataset['lon']
         basemap_topo=dataset['topo']
@@ -249,6 +270,66 @@ def basemap_detail(lat,lon,bathy,draw_parallels,*parallels_interval):
         m.drawparallels(np.arange(round(min(lat),3),round(max(lat),3),parallels_interval),labels=[1,0,0,0],fmt=lat2str,dashes=[2,2])
         #draw meridians
         m.drawmeridians(np.arange(round(min(lon),3),round(max(lon),3),parallels_interval),labels=[0,0,0,1],fmt=lon2str,dashes=[2,2]) 
+
+def basemap_JiM(lat,lon,bathy,draw_parallels,*parallels_interval):
+        url='http://geoport.whoi.edu/thredds/dodsC/bathy/crm_vol1.nc'
+        try:
+          dataset=open_url(url)
+        except:
+          print "please check your url!"
+          sys.exit(0)
+        basemap_lat=dataset['lat']
+        basemap_lon=dataset['lon']
+        basemap_topo=dataset['topo']
+        # add the detail of basemap
+        minlat=min(lat)-0.01
+        maxlat=max(lat)+0.01
+        minlon=min(lon)+0.01
+        maxlon=max(lon)-0.01
+        basemap_lat=[float(i) for i in basemap_lat]
+        basemap_lat.reverse()
+        range_basemap_lat=range(len(basemap_lat))
+        range_basemap_lat.reverse()
+        index_minlat=int(round(np.interp(minlat,basemap_lat,range_basemap_lat)))
+        index_maxlat=int(round(np.interp(maxlat,basemap_lat,range_basemap_lat)))
+        index_minlon=int(round(np.interp(minlon,basemap_lon,range(0,basemap_lon.shape[0]))))
+        index_maxlon=int(round(np.interp(maxlon,basemap_lon,range(0,basemap_lon.shape[0]))))
+        min_index_lat=min(index_minlat,index_maxlat)
+        max_index_lat=max(index_minlat,index_maxlat)
+        X,Y=np.meshgrid(basemap_lon[index_minlon-15:index_maxlon+15],basemap_lat[min_index_lat-15:max_index_lat+15])
+           
+        # You can set negative contours to be solid instead of dashed:
+        matplotlib.rcParams['contour.negative_linestyle'] = 'solid'
+        #plot the bathy
+        if bathy==True:
+          CS=plt.contour(X,Y,basemap_topo.topo[min_index_lat-15:max_index_lat+15,index_minlon-15:index_maxlon+15],3,colors='gray',linewith=0.05)
+          plt.clabel(CS, fontsize=7,fmt='%5.0f', inline=1)
+        #plt.clabel(cs, fontsize=9, inline=1,fmt='%5.0f'+"m")
+        plt.contourf(X,Y,basemap_topo.topo[min_index_lat-15:max_index_lat+15,index_minlon-15:index_maxlon+15],[0,1000],colors='grey')
+        ax=plt.gca()
+        ax.set_xticklabels([])
+        ax.set_yticklabels([])
+
+    
+        #set up the map in a Equidistant Cylindrical projection
+        if draw_parallels==True:
+        
+          from mpl_toolkits.basemap import Basemap
+          m = Basemap(projection='cyl',llcrnrlat=min(lat),urcrnrlat=max(lat),\
+            llcrnrlon=min(lon),urcrnrlon=max(lon),resolution='h',suppress_ticks=False)#,fix_aspect=False)
+          if len(parallels_interval)<1:
+             parallels_interval=1
+             #draw parallels     
+             m.drawparallels(np.arange(int(min(lat)),int(max(lat)),float(parallels_interval)),labels=[1,0,0,0],fmt=lat2str,dashes=[2,2])
+             #draw meridians
+             m.drawmeridians(np.arange(int(min(lon)),int(max(lon)),float(parallels_interval)),labels=[0,0,0,1],fmt=lon2str,dashes=[2,2])     
+          else:
+             parallels_interval=parallels_interval[0]
+             #draw parallels
+             m.drawparallels(np.arange(round(min(lat),3),round(max(lat),3),parallels_interval),labels=[1,0,0,0],fmt=lat2str,dashes=[2,2])
+             #draw meridians
+             m.drawmeridians(np.arange(round(min(lon),3),round(max(lon),3),parallels_interval),labels=[0,0,0,1],fmt=lon2str,dashes=[2,2]) 
+          
 
 def basemap_region(region):
     path="" # Y:/bathy/"#give the path if these data files are store elsewhere

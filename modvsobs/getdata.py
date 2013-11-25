@@ -1041,7 +1041,8 @@ def getobs_tempsalt(site,input_time,dep):
     temp=part_t
     datet=part_time
     salt=part_salt
-    return datet,temp,salt
+    distinct_dep=np.mean(depth)
+    return datet,temp,salt,distinct_dep
 
 
 

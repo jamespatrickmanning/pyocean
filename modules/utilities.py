@@ -65,7 +65,10 @@ def lat2str(deg):
             deg += 1.0
             min -= 60.0
         dir = 'S'
-    return (u"%d\N{DEGREE SIGN} %g' %s") % (np.abs(deg),np.abs(min),dir)
+    if np.floor(min)==0:        
+      return (u"%d\N{DEGREE SIGN}%s") % (np.abs(deg),dir)
+    else:  
+      return (u"%d\N{DEGREE SIGN} %g' %s") % (np.abs(deg),np.abs(min),dir)
   
 def lon2str(deg):
     min = 60 * (deg - np.floor(deg))
@@ -76,8 +79,11 @@ def lon2str(deg):
             deg += 1.0
             min -= 60.0
         dir = 'W'
-    return (u"%d\N{DEGREE SIGN} %g' %s") % (np.abs(deg),np.abs(min),dir)
-
+    if np.floor(min)==0:        
+      return (u"%d\N{DEGREE SIGN}%s") % (np.abs(deg),dir)
+    else:  
+      return (u"%d\N{DEGREE SIGN} %g' %s") % (np.abs(deg),np.abs(min),dir)
+      
 def nearlonlat(lon,lat,lonp,latp):
     """
     i,min_dist=nearlonlat(lon,lat,lonp,latp) change

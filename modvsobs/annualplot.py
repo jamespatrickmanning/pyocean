@@ -44,14 +44,15 @@ Vitalii Sheremet, FATE Project
     i=np.argmin(dist2)
     #min_dist=np.sqrt(dist2[i])
     return i#,min_dist
-site=['BN01']
+site=['GS01']
 depthinfor=[]
 minnumperday=18
 numperday=24
 intend_to='temp'##############notice intend_to can be 'temp'or'salinity'
 surf_or_bott='bott'
-starttime=dt.datetime(2003,1,1)
-endtime=dt.datetime(2010,12,31)
+starttime=dt.datetime(2004,1,1)
+endtime=dt.datetime(2013,12,31)
+modobs='obs';# 'both" is an option
 for k in range(len(site)):
 #################read-in obs data##################################
         print site[k]
@@ -59,11 +60,12 @@ for k in range(len(site)):
         print bd
         [lati,loni]=dm2dd(lati,loni)#converts decimal-minutes to decimal degrees
         if surf_or_bott=='bott':
-            dept=[bd[0]-0.25*bd[0],bd[0]+.25*bd[0]]
+            dept=[bd[0]-0.25*bd[0],bd[0]+.25*bd[0]] #use depth ranges within 25% of water column depth
         else:
             dept=[0,5]
         (obs_dt,obs_temp,obs_salt,distinct_dep)=getobs_tempsalt(site[k], input_time=[starttime,endtime], dep=dept)
-        depthinfor.append(site[k]+','+str(bd[0])+','+str(distinct_dep[0])+'\n')
+        #depthinfor.append(site[k]+','+str(bd[0])+','+str(distinct_dep[0])+'\n')
+        depthinfor.append(site[k]+','+str(bd[0])+','+str(round(distinct_dep,3))+'\n')
         obs_dtindex=[]
         if intend_to=='temp':
             for kk in range(len(obs_temp)):
@@ -77,13 +79,15 @@ for k in range(len(site)):
         print 'obs Dataframe is ready'
         resamdaobs=float64(obstso[0]).resample('A',how=['count','mean'])
         
-        resamdaobs.ix[resamdaobs['count']<7500,['mean']] = 'NaN'
+        #resamdaobs.ix[resamdaobs['count']<7500,['mean']] = 'NaN'
+        resamdaobs.ix[resamdaobs['count']<75,['mean']] = 'NaN'
         #the following makes a special results for cases where there is not a full year of data so , we plot this later with a bigger marker
         resamdaobsdot=resamdaobs[(resamdaobs['count']>7500) & (resamdaobs['count']<8160)]
         #starttime=obs_dt[0].replace(tzinfo=None)
         #endtime=obs_dt[-1].replace(tzinfo=None)
-        
-        if surf_or_bott=='bott':
+        if modobs=='both':
+          # Now get the model estimate of annual means at this site
+          if surf_or_bott=='bott':
             layer=44
             vname=intend_to
             urlfvcom = 'http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/hindcasts/30yr_gom3'
@@ -98,7 +102,7 @@ for k in range(len(site)):
             inode = nearlonlat(lon,lat,loni,lati)
             print inode
             modindex=netCDF4.date2index([starttime,endtime],times,select='nearest')
-            print "now gnerate Dateframe"
+            print "now generate model Dataframe"
             modtso=pd.DataFrame(var[modindex[0]:modindex[1],layer,inode],index=jd[modindex[0]:modindex[1]])
             '''
 These are the "monthly correction coefficients" if we wanted to improve the model but we do not actuall use them here. 
@@ -133,22 +137,27 @@ modtso[0][mm]=modtso[0][mm]-0.12
             resamdamod.ix[resamdamod['count']<8160,['mean']] = 'NaN'
             #resamdamod['mean'] += resamdaobs['mean']*0
             #resamdamoddot=resamdamod[(resamdamod['count']>7500) & (resamdamod['count']<8160)]
-            fig=plt.figure()
-            ax=fig.add_subplot(111)
-            ax.plot_date(resamdaobs.index-1,resamdaobs['mean'],fmt='o-')
-            ax.plot_date(resamdamod.index-1,resamdamod['mean'],fmt='o-',color='red')#bottom most value equals 44
-            plt.grid()
-            ax.plot_date(resamdaobsdot.index-(timedelta(days=365)),resamdaobsdot['mean'],marker='o',markersize=20)
-            if intend_to=='temp':
-                plt.ylabel('degree C',fontsize=20)
-            else:
-                plt.ylabel('salinity')
-            plt.title('eMOLT site '+site[k]+'annual mean vs FVCOM ',fontsize=20)
-            plt.legend(['observed','modeled'],loc='best')
-            ax.tick_params(axis='both', which='major', labelsize=15)
-            plt.show()
-            plt.savefig(site[k]+surf_or_bott+intend_to+' annual_mod_obs2.png')
-            '''
+        fig=plt.figure()
+        ax=fig.add_subplot(111)
+        ax.plot_date(resamdaobs.index-1,resamdaobs['mean'],fmt='o-')
+        #plt.grid()
+        #ax.plot_date(resamdaobsdot.index-(timedelta(days=365)),resamdaobsdot['mean'],marker='o',markersize=20)
+        if intend_to=='temp':
+            plt.ylabel('degree C',fontsize=20)
+        else:
+            plt.ylabel('salinity')
+        #ax.tick_params(axis='both', which='major', labelsize=15)
+        if modobs=='both':        
+          ax.plot_date(resamdamod.index-1,resamdamod['mean'],fmt='o-',color='red')#bottom most value equals 44
+          plt.title('eMOLT site '+site[k]+' annual mean vs FVCOM ',fontsize=20)
+          plt.legend(['observed','modeled'],loc='best')
+          plt.show()
+          plt.savefig(site[k]+surf_or_bott+intend_to+'_annual_mod_obs.png')# where "intend_to"  is temp or salt
+        else:
+          plt.title('eMOLT site '+site[k]+' annual mean',fontsize=20)  
+          plt.show()
+          plt.savefig('/net/nwebserver/epd/ocean/MainPage/lob/'+site[k]+surf_or_bott+intend_to+'_annual_obs.png')
+'''
 fig=plt.figure()
 ax=fig.add_subplot(111)
 ax.plot_date(obstso.index,obstso[0],fmt='-')

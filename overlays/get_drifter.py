@@ -5,6 +5,10 @@ Created on Mon Oct 15 15:32:36 2012
 @author: huanxin
 
 This use for plot track of drifter, use ctl file "getcodar_ctl.txt"
+
+JManning modifications:
+    It apparently uses "raw" drifter data rather then the webserved ORACLE data.
+    
 """
 from matplotlib.dates import date2num, num2date
 import datetime

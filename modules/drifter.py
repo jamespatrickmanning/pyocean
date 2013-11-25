@@ -11,23 +11,33 @@ from conversions import *
 
 
 # plot lat,lon and show text at the location of day change    
-def plot_latlon(lat,lon,dtime,id):
+def plot_latlon(lat,lon,dtime,id,ndays_label,linecol,daymth):
     # find places marking new day & annotate plot
+    # daymth is a list of strings like '5/17'
     index_day=[]
     for i in range(1,np.size(dtime)):
       if dtime[i].day <> dtime[i-1].day:
           index_day.append(i-1)
-    fig=plt.figure()
-    plt.title('Drifter# '+str(id))
-    ax = fig.add_subplot(111)
-    plt.xlabel('Longitude W')
-    plt.ylabel('Latitude N')
-    plt.plot(lon,lat, color = 'blue', lw = 1)
-    for i in index_day:
-        ax.annotate(str(dtime[i].month)+"/"+str(dtime[i].day), xy=(lon[i], lat[i]),  xycoords='data',
-                xytext=(10, 15), textcoords='offset points',
+    #fig=plt.figure()
+    #plt.title('Drifter# '+str(id))
+    #ax = fig.add_subplot(111)
+    #plt.xlabel('Longitude W')
+    #plt.ylabel('Latitude N')
+    plt.plot(lon,lat, color = linecol, lw = 2)
+    for i in index_day[::ndays_label]:
+        dm_str=str(dtime[i].month)+"/"+str(dtime[i].day)
+        for j in range(len(daymth)):
+          if daymth[j]==dm_str:
+              if id==55202:
+                  xt=15
+                  yt=-20
+              else:
+                  xt=15
+                  yt=20
+              plt.annotate(str(dtime[i].month)+"/"+str(dtime[i].day), xy=(lon[i], lat[i]),  xycoords='data',
+                xytext=(xt, yt), textcoords='offset points',color=linecol,
                 arrowprops=dict(arrowstyle="->"))
-    plt.show()
+    #plt.show()
 
 ##read the csv file and get lat,lon,dt,jd
 def read_drifter_file(filename):
