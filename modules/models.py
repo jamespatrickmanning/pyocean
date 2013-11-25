@@ -1,14 +1,17 @@
 import sys
 import numpy as np
 from pydap.client import open_url
-from utilities import nearxy
 import datetime as dt
 from matplotlib.dates import num2date, date2num
 from matplotlib.ticker import FormatStrFormatter
 import matplotlib.mlab as ml
+import netCDF4
 import scipy
 import time
 import matplotlib.pyplot as plt
+import pandas as pd
+# import some local modules
+from utilities import nearxy,nearlonlat
 
 def get_dataset(url):
     try:    
@@ -115,7 +118,30 @@ def getFVCOM_bottom_temp(url, time0, mlon, mlat):
     temperature = list(temp[index_time, :, index_location_h])
             
     return depths, temperature
+    
 
+def getFVCOM_bottom_tempsalt_netcdf(lati,loni,starttime,endtime,layer,vname):#vname='temp'or'salinity'
+        '''
+        Function written by Yacheng Wang
+        generates model data as a DataFrame
+        according to time and local position
+        different from getFVCOM_bottom_temp:
+        this function only return time-temp dataframe and ues netcdf4
+        getFVCOM_bottom_temp return depth and temp
+        '''
+        urlfvcom = 'http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/hindcasts/30yr_gom3'
+        nc = netCDF4.Dataset(urlfvcom)
+        nc.variables
+        lat = nc.variables['lat'][:]
+        lon = nc.variables['lon'][:]
+        times = nc.variables['time']
+        jd = netCDF4.num2date(times[:],times.units)
+        var = nc.variables[vname]
+        inode = nearlonlat(lon,lat,loni,lati)
+        modindex=netCDF4.date2index([starttime,endtime],times,select='nearest')
+        modtso=pd.DataFrame(var[modindex[0]:modindex[1],layer,inode],index=jd[modindex[0]:modindex[1]])
+        return modtso
+        
 def getmodel_GOMPOM(mlat, mlon, depth_i, stime, etime, dataset):
     "use this function to get 'GOMPOM'"
     U_array = dataset['u']

@@ -83,6 +83,20 @@ def lon2str(deg):
       return (u"%d\N{DEGREE SIGN}%s") % (np.abs(deg),dir)
     else:  
       return (u"%d\N{DEGREE SIGN} %g' %s") % (np.abs(deg),np.abs(min),dir)
+
+def my_x_axis_format(ax, dt):
+           if dt>td(days=6):
+                intr=int(dt.days/6)
+           else:
+                intr=2
+    #ax.xaxis.set_minor_locator(dates.WeekdayLocator(byweekday=(1),interval=intr))
+           ax.xaxis.set_minor_locator(mdates.DayLocator(interval=intr))
+           ax.xaxis.set_minor_formatter(mdates.DateFormatter('%b%d'))
+           years= mdates.YearLocator() # every year
+           yearsFmt = mdates.DateFormatter('')
+           ax.xaxis.set_major_locator(years)
+           ax.xaxis.set_major_formatter(yearsFmt)
+           return ax
       
 def nearlonlat(lon,lat,lonp,latp):
     """

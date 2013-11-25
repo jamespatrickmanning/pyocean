@@ -271,45 +271,60 @@ def getemolt_temp(site, input_time=[dt.datetime(1880,1,1),dt.datetime(2020,1,1)]
     
     return datet,temp
 
-
-
-
-def read_old_mooring_asc(filename):
+def getobs_tempsalt(site,input_time,dep):
     """
-    Read old mooring data
-    Input: filename
-    Example data file: "Y:/moor/nech/NEC312b.dat"
-    Returns: date_time_number, u, v, y
+    Function written by Yacheng Wang and used in "modvsobs"
+    get data from url, return datetime, temperature, and start and end times
+    input_time can either contain two values: start_time & end_time OR one value:interval_days
     """
-    try:
-        dataReader = csv.reader(open(filename, 'rb'))
-    except:
-        print "Cannot open file."
-        sys.exit(0)
-    
-    verts = [row for row in dataReader]
-    
-    del verts[-1], verts[0] #del the first line and last line
-    u, v, year, y, hour = [], [], [], [], []
-    for i in range(0, len(verts)):
-        #convert "space delimiter" to comma
-        year.append(verts[i][0].split()[1])
-        hour.append(verts[i][0].split()[2])
-        u.append(verts[i][0].split()[6])
-        v.append(verts[i][0].split()[7])
-        y.append(0)
-    hour_time = []
-    for hour_i in hour:
-        hourtime = hour_i[0:2] + ":" + hour_i[2:]
-        hour_time.append(hourtime)
-    date_time_number = []
-    for i in range(0, len(year)):
-        datetime = dt.datetime.strptime(year[i] + " " + hour_time[i], '%Y-%m-%d %H:%M')
-        date_time_number.append(date2num(datetime))
-    u = [float(i) for i in u]
-    v = [float(i) for i in v]
-    return date_time_number, u, v, y
+    url = 'http://gisweb.wh.whoi.edu:8080/dods/whoi/emolt_sensor?emolt_sensor.SITE,emolt_sensor.YRDAY0_LOCAL,emolt_sensor.TIME_LOCAL,emolt_sensor.TEMP,emolt_sensor.DEPTH_I,emolt_sensor.SALT&emolt_sensor.SITE='
+    dataset = get_dataset(url + '"' + site + '"')
+    var = dataset['emolt_sensor']
+    print 'extracting eMOLT data using PyDap... hold on'
+    temp = list(var.TEMP)
+    depth = list(var.DEPTH_I)
+    time0 = list(var.YRDAY0_LOCAL)
+    year_month_day = list(var.TIME_LOCAL)
+    salt=list(var.SALT)
   
+    print 'Generating a datetime ... hold on'
+    datet = []
+    for i in scipy.arange(len(time0)):
+        #datet.append(num2date(time0[i]+1.0).replace(year=time.strptime(year_month_day[i], '%Y-%m-%d').tm_year).replace(day=time.strptime(year_month_day[i], '%Y-%m-%d').tm_mday))
+        datet.append(num2date(time0[i]+1.0).replace(year=dt.datetime.strptime(year_month_day[i], '%Y-%m-%d').year).replace(month=dt.datetime.strptime(year_month_day[i],'%Y-%m-%d').month).replace(day=dt.datetime.strptime(year_month_day[i],'%Y-%m-%d').day).replace(tzinfo=None))
+    #get the index of sorted date_time
+    print 'Sorting mooring data by time'
+    index = range(len(datet))
+    index.sort(lambda x, y:cmp(datet[x], datet[y]))
+    #reorder the list of date_time,u,v
+    datet = [datet[i] for i in index]
+    temp = [temp[i] for i in index]
+    depth = [depth[i] for i in index]
+    salt=[salt[i] for i in index]
+
+    print 'Delimiting mooring data according to user-specified time'  
+    part_t,part_time,part_salt = [], [],[]
+    if len(input_time) == 2:
+        start_time = input_time[0]
+        end_time = input_time[1]
+    if len(input_time) == 1:
+        start_time = datet[0]
+        end_time = start_time + input_time[0]
+    if  len(input_time) == 0:
+        start_time = datet[0]
+        end_time=datet[-1]
+    print datet[0], datet[-1]
+    for i in range(0, len(temp)):
+        if (start_time <= datet[i] <= end_time) & (dep[0]<=depth[i]<= dep[1]):
+            part_t.append(temp[i])
+            part_time.append(datet[i]) 
+            part_salt.append(salt[i])
+    temp=part_t
+    datet=part_time
+    salt=part_salt
+    distinct_dep=np.mean(depth)
+    return datet,temp,salt,distinct_dep
+
   
 def get_w_depth(xi, yi, url='http://geoport.whoi.edu/thredds/dodsC/bathy/gom03_v03'):
     try:    
@@ -511,3 +526,40 @@ def getsst(second):
     lat = dataset['lat']
     lon = dataset['lon']
     return sst, time1, lat, lon
+
+def read_old_mooring_asc(filename):
+    """
+    Read old mooring data
+    Input: filename
+    Example data file: "Y:/moor/nech/NEC312b.dat"
+    Returns: date_time_number, u, v, y
+    """
+    try:
+        dataReader = csv.reader(open(filename, 'rb'))
+    except:
+        print "Cannot open file."
+        sys.exit(0)
+    
+    verts = [row for row in dataReader]
+    
+    del verts[-1], verts[0] #del the first line and last line
+    u, v, year, y, hour = [], [], [], [], []
+    for i in range(0, len(verts)):
+        #convert "space delimiter" to comma
+        year.append(verts[i][0].split()[1])
+        hour.append(verts[i][0].split()[2])
+        u.append(verts[i][0].split()[6])
+        v.append(verts[i][0].split()[7])
+        y.append(0)
+    hour_time = []
+    for hour_i in hour:
+        hourtime = hour_i[0:2] + ":" + hour_i[2:]
+        hour_time.append(hourtime)
+    date_time_number = []
+    for i in range(0, len(year)):
+        datetime = dt.datetime.strptime(year[i] + " " + hour_time[i], '%Y-%m-%d %H:%M')
+        date_time_number.append(date2num(datetime))
+    u = [float(i) for i in u]
+    v = [float(i) for i in v]
+    return date_time_number, u, v, y
+  
