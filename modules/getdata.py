@@ -326,7 +326,8 @@ def getobs_tempsalt(site,input_time,dep):
     return datet,temp,salt,distinct_dep
 
   
-def get_w_depth(xi, yi, url='http://geoport.whoi.edu/thredds/dodsC/bathy/gom03_v03'):
+#def get_w_depth(xi, yi, url='http://geoport.whoi.edu/thredds/dodsC/bathy/gom03_v03'):
+def get_w_depth(xi, yi, url='http://geoport.whoi.edu/thredds/dodsC/bathy/crm_vol1.nc' ):
     try:    
         dataset = open_url(url)
         

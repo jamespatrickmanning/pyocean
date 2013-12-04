@@ -180,6 +180,10 @@ def distance(origin, destination):
     """
     lat1, lon1 = origin
     lat2, lon2 = destination
+    if lat1>1000:
+        (lat1,lon1)=dm2dd(lat1,lon1)
+        (lat2,lon2)=dm2dd(lat2,lon2)
+        print 'converted to from ddmm to dd.ddd'
     radius = 6371 # km
     
 
