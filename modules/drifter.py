@@ -9,7 +9,26 @@ from conversions import *
 
 
 
+# plot lat,lon and show text at the location of day change    
+def plot_latlon(lat,lon,dtime,id):
+    # find places marking new day & annotate plot
+    index_day=[]
+    for i in range(1,np.size(dtime)):
+      if dtime[i].day <> dtime[i-1].day:
+          index_day.append(i-1)
+    fig=plt.figure()
+    plt.title('Drifter# '+str(id))
+    ax = fig.add_subplot(111)
+    plt.xlabel('Longitude W')
+    plt.ylabel('Latitude N')
+    plt.plot(lon,lat, color = 'blue', lw = 1)
+    for i in index_day:
+        ax.annotate(str(dtime[i].month)+"/"+str(dtime[i].day), xy=(lon[i], lat[i]),  xycoords='data',
+                xytext=(10, 15), textcoords='offset points',
+                arrowprops=dict(arrowstyle="->"))
+    plt.show()
 
+'''
 # plot lat,lon and show text at the location of day change    
 def plot_latlon(lat,lon,dtime,id,ndays_label,linecol,daymth):
     # find places marking new day & annotate plot
@@ -38,7 +57,7 @@ def plot_latlon(lat,lon,dtime,id,ndays_label,linecol,daymth):
                 xytext=(xt, yt), textcoords='offset points',color=linecol,
                 arrowprops=dict(arrowstyle="->"))
     #plt.show()
-
+'''
 ##read the csv file and get lat,lon,dt,jd
 def read_drifter_file(filename):
     # This needed to be redone completely
@@ -95,7 +114,7 @@ def read_drifter_file(filename):
         jd_year_date=jd_date.replace(tzinfo=None)
         jd_year= jd_year_date.replace(year=int(yeartime))
         dtime.append(jd_year)
-  
+
     return dtime,lat,lon
 
 

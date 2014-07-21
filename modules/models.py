@@ -59,16 +59,14 @@ def get_index_latlon(url,lat,lon):
 
 def getdepth(lat, lon):
     """
-    get the model depth for lat,lon
+    get the USGS depth for lat,lon
     """
-    url = 'http://geoport.whoi.edu/thredds/dodsC/bathy/gom03_v03'
+    url = 'http://geoport.whoi.edu/thredds/dodsC/bathy/gom03_v1_0'
     index_lat, index_lon, basemap_topo = get_index_latlon(url,lat,lon)
     if index_lat == 0 or index_lon == 0:        
         url = 'http://geoport.whoi.edu/thredds/dodsC/bathy/crm_vol1.nc'
         index_lat, index_lon, basemap_topo = get_index_latlon(url,lat,lon)
     return basemap_topo.topo[index_lat, index_lon]
-
-
 
 def getFVCOM_bottom_temp(url, time0, mlon, mlat):
     """get depth from the getmodel"""
@@ -118,7 +116,21 @@ def getFVCOM_bottom_temp(url, time0, mlon, mlat):
     temperature = list(temp[index_time, :, index_location_h])
             
     return depths, temperature
-    
+
+
+def getFVCOM_depth(lati,loni):#vname='temp'or'salinity'
+        '''
+        Function written by Jim Manning
+        generates model depth data as a DataFrame
+        '''
+        urlfvcom = 'http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/hindcasts/30yr_gom3'
+        nc = netCDF4.Dataset(urlfvcom)
+        nc.variables
+        lat = nc.variables['lat'][:]
+        lon = nc.variables['lon'][:]
+        dep = nc.variables['h'][:]
+        inode = nearlonlat(lon,lat,loni,lati)
+        return dep[inode]            
 
 def getFVCOM_bottom_tempsalt_netcdf(lati,loni,starttime,endtime,layer,vname):#vname='temp'or'salinity'
         '''

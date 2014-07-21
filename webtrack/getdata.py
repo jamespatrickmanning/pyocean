@@ -4,15 +4,15 @@ import datetime as dt
 import scipy
 import pylab
 import sys
+import pytz
 import time
 import matplotlib.pyplot as plt
 import matplotlib.mlab as ml
 import numpy as np
-from conversions import distance,dm2dd,fth2m
-from pydap.client import open_url
-import pandas as pd # needed for new ERDDAP data extractions
+from conversions import distance,dm2dd
 from dateutil.parser import parse
-import pytz
+import pandas as pd  
+#from pydap.client import open_url
 #from basemap import basemap_usgs
 
 
@@ -44,30 +44,34 @@ def getdrift_ids():
     
 def getdrift(did):
     """
-    uses pandas to get remotely-stored drifter data via ERDDAP given a deployment id ("did") number
-    where "did" is a string representing a deployment id.
+    -assumes "import pandas as pd" has been issued above
+    -get remotely-stored drifter data via ERDDAP
+    -input: deployment id ("did") number where "did" is a string
+    -output: time(datetime), lat (decimal degrees), lon (decimal degrees), depth (meters)
+    Jim Manning June 2014
     """
-    url = 'http://comet.nefsc.noaa.gov:8080/erddap/tabledap/drifters.csv?time,latitude,longitude,depth&id="'+did+'"'
-    print url
-    df=pd.read_csv(url,skiprows=[1])
+    url = 'http://comet.nefsc.noaa.gov:8080/erddap/tabledap/drifters.csv?time,latitude,longitude,depth&id="'+did+'"&orderBy("time")'
+    df=pd.read_csv(url,skiprows=[1]) #returns a dataframe with all that requested
     # generate this datetime 
     for k in range(len(df)):
-       df.time[k]=parse(df.time[k])
-    #df=df.sort(df['time'].values)
-    lat=df.latitude.values
-    lon=df.longitude.values
-    depth=df.depth.values
-    time=df.time.values
-    print 'Sorting mooring data by time'
-    index = range(len(time))
-    index.sort(lambda x, y:cmp(time[x], time[y]))
-    #reorder the list of date_time,u,v
-    time= [time[i] for i in index]
-    lat = [lat[i] for i in index]
-    lon = [lon[i] for i in index]
-    depth = [depth[i] for i in index]
-    return time,lat,lon,depth
+       df.time[k]=parse(df.time[k]) # note this "parse" routine magically converts ERDDAP time to Python datetime
+    return df.latitude.values,df.longitude.values,df.time.values,df.depth.values    
 
+def getrawdrift(did,filename):
+   '''
+   routine to get raw drifter data from ascii files on line
+   '''
+   url='http://nefsc.noaa.gov/drifter/'+filename
+   df=pd.read_csv(url,header=None, delimiter=r"\s+")
+   # make a datetime
+   dtime=[]
+   for k in range(len(df[0])):
+      dt1=dt.datetime(int(filename[-10:-6]),df[2][k],df[3][k],df[4][k],df[5][k],0,0,pytz.utc)
+      #print dt1
+      dtime.append(dt1)
+   return df[8],df[7],dtime,df[9]
+   
+   
 def getcodar(url, datetime_wanted):
     """
     Routine to track particles very crudely though the codar fields
@@ -148,12 +152,18 @@ def getcodar1(url, starttime, endtime):
 
 def getemolt_latlon(site):
     """
-    get lat, lon, and depth for a particular emolt site 
+    get data from emolt_sensor 
     """
-    #urllatlon = 'http://gisweb.wh.whoi.edu:8080/dods/whoi/emolt_site?emolt_site.SITE,emolt_site.LAT_DDMM,emolt_site.LON_DDMM,emolt_site.ORIGINAL_NAME,emolt_site.BTM_DEPTH&emolt_site.SITE='
-    urllatlon = 'http://comet.nefsc.noaa.gov:8080/erddap/tabledap/eMOLT.csv?latitude,longitude,depth&SITE="'+str(site)+'"&distinct()'
-    df=pd.read_csv(urllatlon,skiprows=[1])
-    return df.latitude[0], df.longitude[0], df.depth[0]
+    urllatlon = 'http://gisweb.wh.whoi.edu:8080/dods/whoi/emolt_site?emolt_site.SITE,emolt_site.LAT_DDMM,emolt_site.LON_DDMM,emolt_site.ORIGINAL_NAME,emolt_site.BTM_DEPTH&emolt_site.SITE='
+    dataset = open_url(urllatlon+'"'+site+'"')
+    print dataset
+    var = dataset['emolt_site']
+    lat = list(var.LAT_DDMM)
+    lon = list(var.LON_DDMM)
+    original_name = list(var.ORIGINAL_NAME)
+    bd=list(var.BTM_DEPTH)
+  
+    return lat[0], lon[0], original_name,bd
 
 
 def getemolt_uv(site, input_time, dep):
@@ -258,22 +268,59 @@ def getemolt_temp(site, input_time=[dt.datetime(1880,1,1),dt.datetime(2020,1,1)]
     
     return datet,temp
 
-def getobs_tempsalt(site,input_time):
+def getobs_tempsalt(site,input_time,dep):
     """
-    Function written by Jim Manning and used in "modvsobs"
+    Function written by Yacheng Wang and used in "modvsobs"
     get data from url, return datetime, temperature, and start and end times
     input_time can either contain two values: start_time & end_time OR one value:interval_days
-    and they should be timezone aware 
-    example: input_time=[dt(2003,1,1,0,0,0,0,pytz.UTC),dt(2009,1,1,0,0,0,0,pytz.UTC)]
     """
-    #url = 'http://gisweb.wh.whoi.edu:8080/dods/whoi/emolt_sensor?emolt_sensor.SITE,emolt_sensor.YRDAY0_LOCAL,emolt_sensor.TIME_LOCAL,emolt_sensor.TEMP,emolt_sensor.DEPTH_I,emolt_sensor.SALT&emolt_sensor.SITE='
-    url = 'http://comet.nefsc.noaa.gov:8080/erddap/tabledap/eMOLT.csv?time,depth,sea_water_temperature&SITE="'+str(site)+'"&orderBy("time")'
-    df=pd.read_csv(url,skiprows=[1])
-    for k in range(len(df)):
-       df.time[k]=parse(df.time[k])
-    df=df[df.time>=input_time[0]]
-    df=df[df.time<=input_time[1]]
-    return df.time.values,df.sea_water_temperature.values,df.depth.values
+    url = 'http://gisweb.wh.whoi.edu:8080/dods/whoi/emolt_sensor?emolt_sensor.SITE,emolt_sensor.YRDAY0_LOCAL,emolt_sensor.TIME_LOCAL,emolt_sensor.TEMP,emolt_sensor.DEPTH_I,emolt_sensor.SALT&emolt_sensor.SITE='
+    dataset = get_dataset(url + '"' + site + '"')
+    var = dataset['emolt_sensor']
+    print 'extracting eMOLT data using PyDap... hold on'
+    temp = list(var.TEMP)
+    depth = list(var.DEPTH_I)
+    time0 = list(var.YRDAY0_LOCAL)
+    year_month_day = list(var.TIME_LOCAL)
+    salt=list(var.SALT)
+  
+    print 'Generating a datetime ... hold on'
+    datet = []
+    for i in scipy.arange(len(time0)):
+        #datet.append(num2date(time0[i]+1.0).replace(year=time.strptime(year_month_day[i], '%Y-%m-%d').tm_year).replace(day=time.strptime(year_month_day[i], '%Y-%m-%d').tm_mday))
+        datet.append(num2date(time0[i]+1.0).replace(year=dt.datetime.strptime(year_month_day[i], '%Y-%m-%d').year).replace(month=dt.datetime.strptime(year_month_day[i],'%Y-%m-%d').month).replace(day=dt.datetime.strptime(year_month_day[i],'%Y-%m-%d').day).replace(tzinfo=None))
+    #get the index of sorted date_time
+    print 'Sorting mooring data by time'
+    index = range(len(datet))
+    index.sort(lambda x, y:cmp(datet[x], datet[y]))
+    #reorder the list of date_time,u,v
+    datet = [datet[i] for i in index]
+    temp = [temp[i] for i in index]
+    depth = [depth[i] for i in index]
+    salt=[salt[i] for i in index]
+
+    print 'Delimiting mooring data according to user-specified time'  
+    part_t,part_time,part_salt = [], [],[]
+    if len(input_time) == 2:
+        start_time = input_time[0]
+        end_time = input_time[1]
+    if len(input_time) == 1:
+        start_time = datet[0]
+        end_time = start_time + input_time[0]
+    if  len(input_time) == 0:
+        start_time = datet[0]
+        end_time=datet[-1]
+    print datet[0], datet[-1]
+    for i in range(0, len(temp)):
+        if (start_time <= datet[i] <= end_time) & (dep[0]<=depth[i]<= dep[1]):
+            part_t.append(temp[i])
+            part_time.append(datet[i]) 
+            part_salt.append(salt[i])
+    temp=part_t
+    datet=part_time
+    salt=part_salt
+    distinct_dep=np.mean(depth)
+    return datet,temp,salt,distinct_dep
 
   
 #def get_w_depth(xi, yi, url='http://geoport.whoi.edu/thredds/dodsC/bathy/gom03_v03'):
@@ -326,30 +373,28 @@ def get_w_depth(xi,yi):
        
             distkm, b = distance((ygom[j], xgom[k]), (yi[0], xi[0]))
             dist1.append(distkm)
-    #print dist1        
-    if len(dist1)>=3:    
-      #get the nearest,second nearest,third nearest point.
-      dist_f_nearest = sorted(dist1)[0]
-      dist_s_nearest = sorted(dist1)[1]
-      dist_t_nearest = sorted(dist1)[2]
-    
-      index_dist_nearest = range(len(dist1))
-      index_dist_nearest.sort(lambda x, y:cmp(dist1[x], dist1[y]))
-    
-      dep_f_nearest = dep[index_dist_nearest[0]]
-      dep_s_nearest = dep[index_dist_nearest[1]]
-      dep_t_nearest = dep[index_dist_nearest[2]]
 
-      #compute the finally depth
-      d1 = dist_f_nearest
-      d2 = dist_s_nearest
-      d3 = dist_t_nearest
-      def1 = dep_f_nearest
-      def2 = dep_s_nearest
-      def3 = dep_t_nearest
-      depth_finally = def1 * d2 * d3 / (d1 * d2 + d2 * d3 + d1 * d3) + def2 * d1 * d3 / (d1 * d2 + d2 * d3 + d1 * d3) + def3 * d2 * d1 / (d1 * d2 + d2 * d3 + d1 * d3)
-    else:
-      depth_finally = -999  
+    #get the nearest,second nearest,third nearest point.
+    dist_f_nearest = sorted(dist1)[0]
+    dist_s_nearest = sorted(dist1)[1]
+    dist_t_nearest = sorted(dist1)[2]
+    
+    index_dist_nearest = range(len(dist1))
+    index_dist_nearest.sort(lambda x, y:cmp(dist1[x], dist1[y]))
+    
+    dep_f_nearest = dep[index_dist_nearest[0]]
+    dep_s_nearest = dep[index_dist_nearest[1]]
+    dep_t_nearest = dep[index_dist_nearest[2]]
+
+    #compute the finally depth
+    d1 = dist_f_nearest
+    d2 = dist_s_nearest
+    d3 = dist_t_nearest
+    def1 = dep_f_nearest
+    def2 = dep_s_nearest
+    def3 = dep_t_nearest
+    depth_finally = def1 * d2 * d3 / (d1 * d2 + d2 * d3 + d1 * d3) + def2 * d1 * d3 / (d1 * d2 + d2 * d3 + d1 * d3) + def3 * d2 * d1 / (d1 * d2 + d2 * d3 + d1 * d3)
+
     return depth_finally
 
 def getgomoos(site, *days):
