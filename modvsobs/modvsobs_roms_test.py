@@ -31,8 +31,8 @@ from utilities import my_x_axis_format
 #site=['DC01','DJ01','DK01','DMF1','ET01','GS01','JA01','JC01','JS06','JT04','KO01','MF02','MM01','MW01','NL01','PF01','PM02','PM03','PW01','RA01','RM02','RM04','SJ01','TA14','TA15','TS01']
 #site=['MM01','OC01','OC02','OC03','JP01','JP02','JP03','JP13','JP14','JP19','JP22']
 #site=['JP14','JP19','JP22']
-site=['MM01']
-#site=['OC01']
+#site=['MM01']
+site=['OC01']
 aorb='b_'
 intime=[dt(2006,1,10,1,0,0,0,pytz.UTC),dt(2013,12,31,0,0,0,0,pytz.UTC)] # note ROMS starts on 1/10/2006
 siteprocess=[]
@@ -56,6 +56,14 @@ else:
 
 # First, a set of ROMS-related functions ####################################
 class water(object):
+    def __init__(self, startpoint):
+        '''
+        get startpoint of water, and the location of datafile.
+        startpoint = [25,45]
+        '''
+        self.startpoint = startpoint
+    def get_data(self, url):
+        pass
     def bbox2ij(self, lons, lats, bbox):
         """
         Return tuple of indices of points that are completely covered by the 
@@ -89,7 +97,7 @@ class water(object):
                 # p.append(point[index[i])
             # i0,i1,j0,j1 = min(index[1]),max(index[1]),min(index[0]),max(index[0])
             return index
-    def nearest_point_index(self, lon, lat, lons, lats, length=(1, 1)):
+    def nearest_point_index(self, lon, lat, lons, lats, length=(1, 1),num=4):
         '''
         Return the index of the nearest rho point.
         lon, lat: the coordinate of start point, float
@@ -97,41 +105,80 @@ class water(object):
         length: the boundary box.
         '''
         bbox = [lon-length[0], lon+length[0], lat-length[1], lat+length[1]]
+        # i0, i1, j0, j1 = self.bbox2ij(lons, lats, bbox)
+        # lon_covered = lons[j0:j1+1, i0:i1+1]
+        # lat_covered = lats[j0:j1+1, i0:i1+1]
+        # temp = np.arange((j1+1-j0)*(i1+1-i0)).reshape((j1+1-j0, i1+1-i0))
+        # cp = np.cos(lat_covered*np.pi/180.)
+        # dx=(lon-lon_covered)*cp
+        # dy=lat-lat_covered
+        # dist=dx*dx+dy*dy
+        # i=np.argmin(dist)
+        # # index = np.argwhere(temp=np.argmin(dist))
+        # index = np.where(temp==i)
+        # min_dist=np.sqrt(dist[index])
+        # return index[0]+j0, index[1]+i0
         index = self.bbox2ij(lons, lats, bbox)
         lon_covered = lons[index]
         lat_covered = lats[index]
+        # if len(lat_covered) < num:
+            # raise ValueError('not enough points in the bbox')
+        # lon_covered = np.array([lons[i] for i in index])
+        # lat_covered = np.array([lats[i] for i in index])
         cp = np.cos(lat_covered*np.pi/180.)
         dx = (lon-lon_covered)*cp
         dy = lat-lat_covered
         dist = dx*dx+dy*dy
+        
+        # get several nearest points
+        dist_sort = np.sort(dist)[0:9]
+        findex = np.where(dist==dist_sort[0])
+        lists = [[]] * len(findex)
+        for i in range(len(findex)):
+            lists[i] = findex[i]
+        if num > 1:
+            for j in range(1,num):
+                t = np.where(dist==dist_sort[j])
+                for i in range(len(findex)):
+                     lists[i] = np.append(lists[i], t[i])
+        indx = [i[lists] for i in index]
+        return indx, dist_sort[0:num]
+        '''
+        # for only one point returned
         mindist = np.argmin(dist)
         indx = [i[mindist] for i in index]
         return indx, dist[mindist]
+        '''
+    def nearest_point_index2(self, lon, lat, lons, lats):
+        d = dist(lon, lat, lons ,lats)
+        min_dist = np.min(d)
+        index = np.where(d==min_dist)
+        return index
 class water_roms(water):
-   '''
+    '''
     ####(2009.10.11, 2013.05.19):version1(old) 2009-2013
     ####(2013.05.19, present): version2(new) 2013-present
-    (2006.01.01 01:00, present)
-    ''' 
-   def get_url(self, starttime, endtime):
-        '''
-        get url according to starttime and endtime.
-        '''
+    (2006.01.01 01:00, 2014.1.1 00:00)
+    '''
+    def __init__(self):
+        pass
+        # self.startpoint = lon, lat
+        # self.dataloc = self.get_url(starttime)
+    def get_url(self, starttime, endtime):
+       
         self.starttime = starttime
-        #self.hours = int((endtime-starttime).total_seconds()/60/60) # get total hours
-        #time_r = dt(year=2006,month=1,day=9,hour=1,minute=0)
+        # self.hours = int((endtime-starttime).total_seconds()/60/60) # get total hours
+        # time_r = datetime(year=2006,month=1,day=9,hour=1,minute=0)
         url_oceantime = 'http://tds.marine.rutgers.edu:8080/thredds/dodsC/roms/espresso/hidden/2006_da/his?ocean_time'
-        data_oceantime = netCDF4.Dataset(url_oceantime)
-        #t1 = (starttime - dt(2006,01,01)).total_seconds()
-        #t2 = (endtime - dt(2006,01,01)).total_seconds()
-        t1 = (starttime - dt(2006,01,01)).total_seconds()
-        t2 = (endtime - dt(2006,01,01)).total_seconds()
-        index1 = self.__closest_num(t1,data_oceantime.variables['ocean_time'][:])
-        index2 = self.__closest_num(t2,data_oceantime.variables['ocean_time'][:])
-        url = 'http://tds.marine.rutgers.edu:8080/thredds/dodsC/roms/espresso/hidden/2006_da/his?h[0:1:81][0:1:129],s_rho[0:1:35],lon_rho[0:1:81][0:1:129],lat_rho[0:1:81][0:1:129],mask_rho[0:1:81][0:1:129],temp[{0}:1:{1}][0:1:35][0:1:81][0:1:129],ocean_time[{0}:1:{1}]'
-        url = url.format(index1, index2)
+        self.oceantime = netCDF4.Dataset(url_oceantime).variables['ocean_time'][:]    #if url2006, ocean_time.
+        t1 = (starttime - dt(2006,1,1)).total_seconds() # for url2006 it's 2006,01,01; for url2013, it's 2013,05,18, and needed to be devide with 3600
+        t2 = (endtime - dt(2006,1,1)).total_seconds()
+        self.index1 = self.closest_num(t1, self.oceantime)
+        self.index2 = self.closest_num(t2, self.oceantime)
+        url = 'http://tds.marine.rutgers.edu:8080/thredds/dodsC/roms/espresso/hidden/2006_da/his?s_rho[0:1:35],h[0:1:81][0:1:129],lon_rho[0:1:81][0:1:129],lat_rho[0:1:81][0:1:129],mask_rho[0:1:81][0:1:129],temp[{0}:1:{1}][0:1:35][0:1:81][0:1:129],ocean_time[{0}:1:{1}]'
+        url = url.format(self.index1, self.index2)
         return url
-   def __closest_num(self, num, numlist, i=0):
+    def closest_num(self, num, numlist, i=0):
         '''
         Return index of the closest number in the list
         '''
@@ -148,21 +195,20 @@ class water_roms(water):
         elif num == numlist[indx]:
             i = i + indx
         elif num > numlist[indx]:
-            i = self.__closest_num(num, numlist[indx:],
+            i = self.closest_num(num, numlist[indx:],
                               i=i+indx)
         elif num < numlist[indx]:
-            i = self.__closest_num(num, numlist[0:indx+1], i=i)
+            i = self.closest_num(num, numlist[0:indx+1], i=i)
         return i
-   def get_data(self, url):
+    def get_data(self, url):
         '''
         return the data needed.
         url is from water_roms.get_url(starttime, endtime)
         '''
         print url
-        #data = jata.get_nc_data(url, 'lon_rho', 'lat_rho', 'mask_rho','u', 'v', 'h', 's_rho')
         data = jata.get_nc_data(url, 'lon_rho', 'lat_rho', 'mask_rho','temp', 'h', 's_rho','ocean_time')
         return data
-   def waternode(self, lon, lat, depth, url):
+    def waternode(self, lon, lat, depth, url):
         '''
         return points
         '''
@@ -175,10 +221,12 @@ class water_roms(water):
         lats = jata.shrink(lat_rho, mask[1:,1:].shape)
         print 'finding the nearest node ...'
         index, nearestdistance = self.nearest_point_index(lon,lat,lons,lats)
+        index=[index[0][0],index[1][0]]
         depth_layers = data['h'][index[0]][index[1]]*data['s_rho']
         layer = np.argmin(abs(depth_layers-depth))
         print 'extracting modeled time'
         ot=data['ocean_time'][:]
+        print len(ot)
         otdt=[] # datetime version of ocean_time
         for k in range(len(ot)):
            otdt.append(dt(2006,1,1,0,0)+td(seconds=ot[k]))

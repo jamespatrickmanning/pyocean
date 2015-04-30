@@ -44,8 +44,8 @@ for i in range(len(site)):
      plt.plot(diagnal,'--',color=color1)  
      ax.text(.7, 1,"Gradient and intercept:"+str(gradient)[:4]+', '+str(intercept)[:4]+'\n'+'R-squared:'+str(r_value**2)[:4], style='italic',
         bbox={'facecolor':color2,'alpha':3.5, 'pad':30})
-     ax.set_ylabel('mod temp(degreeC)')
-     ax.set_xlabel('obs temp(degreeC)')
+     ax.set_ylabel('Mod temp(degreeC)')
+     ax.set_xlabel('Obs temp(degreeC)')
      plt.title(site[i]+' scatter plot')
      if i==0:
          aorb='a'

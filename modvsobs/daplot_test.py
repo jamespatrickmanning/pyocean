@@ -14,8 +14,8 @@ import matplotlib as mpl
 import numpy as np
 #############################
 # first a few hardcodes
-w_fig=92 # figure number in manuscript which will control what gets plotted and outputfilename
-site='E01' # first site to plot
+w_fig=61 # figure number in manuscript which will control what gets plotted and outputfilename
+site='AG01' # first site to plot
 color2='red' # if you want color make this red
 #############################
 
@@ -28,15 +28,13 @@ else:
 if w_fig==2 or w_fig==3:
   surforbot='bott'
   var='temp'
-  VAR='Temperature'
 elif w_fig==61 or w_fig==62: # actuall 6a and 6b
   surforbot='surf'
   var='temp'
-  VAR='Temperature'
 elif w_fig==91 or w_fig==92:
   surforbot='bott'
   var='salinity'
-  VAR='Salinity'
+
 # Function used to parse date
 def parse(datet):
         #print datet[0:10]
@@ -114,13 +112,13 @@ if w_fig==3:
   ax1.set_title('example summer (2004) bottom temperature at '+site,fontsize=20)
 if w_fig==61 or w_fig==62:
   ax1.set_title('Surface '+var+' at '+site,fontsize=18)
-  ax1.set_ylabel(VAR+' (degC)',fontsize=20)
+  ax1.set_ylabel(var+' (degC)',fontsize=20)
 if w_fig==91:
   df1o=df1o[df1o.index > datetime(2002,8,20,0,0,0)]
   df1o=df1o[df1o.index < datetime(2004,2,15,0,0,0)]
   df1m=df1m[df1m.index > datetime(2002,8,20,0,0,0)]
   df1m=df1m[df1m.index < datetime(2004,2,15,0,0,0)]
-  ax1.set_ylabel(VAR,fontsize=20)
+  ax1.set_ylabel(var,fontsize=20)
   ax1.set_title('Bottom '+var+' at '+site,fontsize=18)
 if w_fig==92:
   ax1=fig.add_subplot(111)
@@ -128,7 +126,7 @@ if w_fig==92:
   df1o=df1o[df1o.index < datetime(2004,3,1,0,0,0)]
   df1m=df1m[df1m.index > datetime(2003,1,1,0,0,0)]
   df1m=df1m[df1m.index < datetime(2004,3,1,0,0,0)]
-  ax1.set_ylabel(VAR,fontsize=20)
+  ax1.set_ylabel(var,fontsize=20)
   ax1.set_title('Bottom '+var+' at '+site,fontsize=18)
 if w_fig==61 or w_fig==62:
     DF1o=season_cycle(df1o)
@@ -137,13 +135,12 @@ if w_fig==61 or w_fig==62:
     df1m=remove_seacycle(df1m,DF1m)
     ax1.plot(df1m.index,df1m['Mean'].values,color=color1)
     ax1.plot(df1o.index,df1o['Mean'].values,color=color2)
-    ax1.lines[1].set_linewidth(1)
 else:
     ax1.plot(df1o.index,df1o['mean'].values,color=color2)
     ax1.plot(df1m.index,df1m['mean'].values,'--',color=color1)
-    ax1.lines[1].set_linewidth(3)
 ax1.grid(True)
 ax1.lines[0].set_linewidth(3)
+ax1.lines[1].set_linewidth(1)
 ax1.tick_params(axis='both', which='major', labelsize=20)
 plt.legend(['modeled','observed'],loc='lower right',# bbox_to_anchor=(1.01, 1.20),
           ncol=3, fancybox=True, shadow=True,prop={'size':14})
@@ -199,7 +196,7 @@ if w_fig==61 or w_fig==62:
   ax=fig.add_subplot(212,sharex=ax1,sharey=ax1)
   ax.plot(df00.index,df00['Mean'].values,color=color1) 
   ax.plot(df.index,df['Mean'].values,color=color2,linewidth=1)
-  ax.set_ylabel(VAR+'(degC)',fontsize=20)
+  ax.set_ylabel(var+' (degC)',fontsize=20)
   ax.set_title('Bottom '+var+' at '+site,fontsize=18)
   ax.grid(True)
   ax.lines[0].set_linewidth(3)
@@ -218,7 +215,7 @@ if w_fig==61 or w_fig==62:
   ax=fig.add_subplot(212,sharex=ax1,sharey=ax1)
   ax.plot(DF00.index,DF00['mean'].values,color=color1) 
   ax.plot(DF.index,DF['mean'].values,color=color2)
-  ax.set_ylabel(VAR+' (degC)',fontsize=20)
+  ax.set_ylabel(var+' (degC)',fontsize=20)
   ax.set_title('Bottom '+var+' at '+site,fontsize=18)
   ax.grid(True)
   ax.lines[0].set_linewidth(3)
@@ -239,7 +236,7 @@ if w_fig==91:
   df2m=df2m[df2m.index > datetime(2002,2,20,0,0,0)]
   df2m=df2m[df2m.index < datetime(2003,7,15,0,0,0)]
   ax2=fig.add_subplot(212)
-  ax2.set_ylabel(VAR,fontsize=20)
+  ax2.set_ylabel(var,fontsize=20)
   ax2.plot(df2m.index,df2m['mean'].values,'--',color=color1)
   ax2.plot(df2o.index,df2o['mean'].values,color=color2)
   ax2.grid(True)

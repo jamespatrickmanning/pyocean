@@ -38,7 +38,7 @@ def resamdc(resamda):
         newindex=[]
         for j in range(len(resamda)):    
                 newindex.append(resamda['mean'].index[j].replace(year=2000)) # puts all observations in the same year
-        repd=pd.DataFrame(resamda['mean'].values,index=newindex)
+        repd=pd.DataFrame(-resamda['mean'].values,index=newindex)
         resamdc=repd[0].resample('D',how=['count','mean','median','min','max','std'])    #add columns for custom date format
         resamdc['yy']=0
         resamdc['mm']=resamdc.index.month
@@ -127,8 +127,7 @@ ax.axes.get_xaxis().set_visible(False)
 ax.set_title(site1)
 ax.grid(True)
 #ax.plot(diffbefore.index,diffbefore['mean'].values)
-rmt=pd.rolling_mean(diffbefore['mean'],30)
-ax.plot(diffbefore.index,rmt.values,'--',color=color1,linewidth=3)
+ax.plot(diffbefore.index,pd.rolling_mean(diffbefore['mean'],30).values,'--',color=color1,linewidth=3)
 ax.plot(diffafter.index,pd.rolling_mean(diffafter['mean'],30).values,color=color2,linewidth=3)
 plt.legend(['before assimilation','after assimilation'],loc='upper right', bbox_to_anchor=(1.01, 1.46),
           ncol=3, fancybox=True, shadow=True)  
@@ -136,10 +135,10 @@ plt.legend(['before assimilation','after assimilation'],loc='upper right', bbox_
 ax1=fig.add_subplot(312,sharex=ax)
 ax1.set_title(site2)
 ax1=xaxix(ax1)
-ax1.set_yticks(np.arange(-1.5,.5,.5))
+ax1.set_yticks(np.arange(-.5,2,.5))
 ax1.axes.get_xaxis().set_visible(False)
 ax1.grid(True)
-ax1.set_ylabel('Obs-Mod Monthly Mean Temperature(degC)')
+ax1.set_ylabel('Mod-Obs Monthly Mean Temperature(degC)')
 #ax1.plot(diffbefore1.index,diffbefore1['mean'].values)
 #ax1.plot(diffafter1.index,diffafter1['mean'].values,color='r')
 ax1.plot(diffbefore1.index,pd.rolling_mean(diffbefore1['mean'],30).values,'--',color=color1,linewidth=3)
@@ -164,5 +163,5 @@ summeanaft2=mean(diffafter2)
 print summeanbef,summeanaft,summeanbef1,summeanaft1,summeanbef2,summeanaft2
 
 plt.show()
-plt.savefig('/net/nwebserver/epd/ocean/MainPage/modvsobs/figs/assimilate_separate.png')
-plt.savefig('/net/nwebserver/epd/ocean/MainPage/modvsobs/figs/assimilate_separate.eps')
+plt.savefig('/net/nwebserver/epd/ocean/MainPage/modvsobs/figs/fig12_assimilate_separate.png')
+plt.savefig('/net/nwebserver/epd/ocean/MainPage/modvsobs/figs/fig12_assimilate_separate.eps')

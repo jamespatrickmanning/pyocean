@@ -59,7 +59,7 @@ def nearlonlat(lon,lat,lonp,latp):
 
 # loop through each site and then each month
 for k in range(len(site)):
-    fig=plt.figure(figsize=(15,10))
+    fig=plt.figure(figsize=(15,12))
     ax=fig.add_subplot(111)
     for m in range(len(month)):
         month_time=month[m]
@@ -78,69 +78,73 @@ for k in range(len(site)):
         dep=dept
 
         print 'extracting eMOLT data using ERDDAP.. hold on'      
-        (datet,temp,depths)=getobs_tempsalt(site[k],input_time)
+        (datet,temp,depths)=getobs_tempsalt(site[k],input_time,dep)
         obstso=pd.DataFrame(temp,index=datet)
         print 'obs Dataframe is ready .. now getting model before assimilation'
         if month_time<10:
             month_time=str(0)+str(month_time)
             urlbeforeassi='http://www.smast.umassd.edu:8080/thredds/dodsC/models/fvcom/NECOFS/Archive/eMOLT/gom'+str(month_time)+'_0001.nc'
-            nb = netCDF4.Dataset(urlbeforeassi)
-            nb.variables
-            latb = nb.variables['lat'][:]
-            lonb = nb.variables['lon'][:]
-            timesb = nb.variables['time']
-            jdb = netCDF4.num2date(timesb[:],timesb.units)
-            for kk in range(len(jdb)): # make these model times timezone aware
-               jdb[kk]=jdb[kk].replace(tzinfo=pytz.UTC)
-            varb = nb.variables[vname]
-            print 'Now find the index of space and time in the before assimilation model'
-            inodeb = nearlonlat(lonb,latb,loni,lati)
-            #print inodeb
-            beftso=pd.DataFrame(varb[:,layer,inodeb],index=jdb)
-            ###http://www.smast.umassd.edu:8080/thredds/dodsC/models/fvcom/NECOFS/Archive/eMOLT_temp/gom3_200801.nc
             urlfvcom = 'http://www.smast.umassd.edu:8080/thredds/dodsC/models/fvcom/NECOFS/Archive/eMOLT_temp/gom3_2008'+str(month_time)+'.nc'
-            nc = netCDF4.Dataset(urlfvcom)
-            nc.variables
-            lat = nc.variables['lat'][:]
-            lon = nc.variables['lon'][:]
-            times = nc.variables['time']
-            jd = netCDF4.num2date(times[:],times.units)
-            for kk in range(len(jd)): # make these model times timezone aware
-               jd[kk]=jd[kk].replace(tzinfo=pytz.UTC)
-            var = nc.variables['temp']
-            print 'Now find the index of space and time in the AFTER assimilation model'
-            inode = nearlonlat(lon,lat,loni,lati)
-            #print inode
-            modtso=pd.DataFrame(var[:,layer,inode],index=jd)
+        else:
+            urlbeforeassi='http://www.smast.umassd.edu:8080/thredds/dodsC/models/fvcom/NECOFS/Archive/eMOLT/gom'+str(month_time)+'_0001.nc'
+            urlfvcom = 'http://www.smast.umassd.edu:8080/thredds/dodsC/models/fvcom/NECOFS/Archive/eMOLT_temp/gom3_2008'+str(month_time)+'.nc'
+        nb = netCDF4.Dataset(urlbeforeassi)
+        nb.variables
+        latb = nb.variables['lat'][:]
+        lonb = nb.variables['lon'][:]
+        timesb = nb.variables['time']
+        jdb = netCDF4.num2date(timesb[:],timesb.units)
+        for kk in range(len(jdb)): # make these model times timezone aware
+            jdb[kk]=jdb[kk].replace(tzinfo=pytz.UTC)
+        varb = nb.variables[vname]
+        print 'Now find the index of space and time in the before assimilation model'
+        inodeb = nearlonlat(lonb,latb,loni,lati)
+        #print inodeb
+        beftso=pd.DataFrame(varb[:,layer,inodeb],index=jdb)
+        ###http://www.smast.umassd.edu:8080/thredds/dodsC/models/fvcom/NECOFS/Archive/eMOLT_temp/gom3_200801.nc
+        nc = netCDF4.Dataset(urlfvcom)
+        nc.variables
+        lat = nc.variables['lat'][:]
+        lon = nc.variables['lon'][:]
+        times = nc.variables['time']
+        jd = netCDF4.num2date(times[:],times.units)
+        for kk in range(len(jd)): # make these model times timezone aware
+            jd[kk]=jd[kk].replace(tzinfo=pytz.UTC)
+        var = nc.variables['temp']
+        print 'Now find the index of space and time in the AFTER assimilation model'
+        inode = nearlonlat(lon,lat,loni,lati)
+        #print inode
+        modtso=pd.DataFrame(var[:,layer,inode],index=jd)
+            
             ####before assimulate#######
         
-            badindex=[]
-            for ii in range(len(modtso)):
-                tdelta=[]
-                for j in range(len(obstso)):
-                    tdelta.append(abs(modtso.index[ii] - obstso.index[j]))
-                if min(tdelta)>timedelta(hours=0.5):
-                       #print min(tdelta),ii
-                       badindex.append(ii)
-                       #print ii
-            modtso=modtso.drop(modtso.index[badindex])
-            beftso=beftso.drop(beftso.index[badindex])
+        badindex=[]
+        for ii in range(len(modtso)):
+            tdelta=[]
+            for j in range(len(obstso)):
+                tdelta.append(abs(modtso.index[ii] - obstso.index[j]))
+            if min(tdelta)>timedelta(hours=0.5):
+                #print min(tdelta),ii
+                badindex.append(ii)
+                #print ii
+        modtso=modtso.drop(modtso.index[badindex])
+        beftso=beftso.drop(beftso.index[badindex])
 
-            #rmsa=np.sqrt((sum((obstso.values-modtso.values)**2))/len(obstso))
-            #rmsb=np.sqrt(sum((obstso.values-beftso.values)**2)/len(obstso))
-            #print "rmsa"+str(rmsa),"rmsb"+str(rmsb)
+        #rmsa=np.sqrt((sum((obstso.values-modtso.values)**2))/len(obstso))
+        #rmsb=np.sqrt(sum((obstso.values-beftso.values)**2)/len(obstso))
+        #print "rmsa"+str(rmsa),"rmsb"+str(rmsb)
      
         
-            ax.plot(obstso.index,obstso[0].values,'-',color=color1)
-            ax.plot(modtso.index,modtso[0].values,'--',color=color2)
-            ax.plot(beftso.index,beftso[0].values,':',color=color3)
-        print 'WARNING: '+str(len(badindex))+' points removed since there was not a matching observation time'        
+        ax.plot(obstso.index,obstso[0].values,'-',color=color1)
+        ax.plot(modtso.index,modtso[0].values,'--',color=color2)
+        ax.plot(beftso.index,beftso[0].values,':',color=color3)
+    print 'WARNING: '+str(len(badindex))+' points removed since there was not a matching observation time'        
     ax.set_ylabel('Temperature',fontsize=20)
     ax.set_title('Bottom temperature at '+str(site[k]),fontsize=18)
     ax.grid(True)
-    plt.legend(['observed','after assimulation','before assimulation'],loc='upper right',# bbox_to_anchor=(1.01, 1.20),
+    plt.legend(['observed','after assimulation','before assimulation'],loc='lower right',# bbox_to_anchor=(1.01, 1.20),
                   ncol=10, fancybox=True, shadow=True,prop={'size':20})
-    ax.tick_params(axis='both', which='major', labelsize=16)
+    ax.tick_params(axis='both', which='major', labelsize=15)
     plt.show()
     plt.savefig(outputplotdir+'fig13'+aorb+'_'+str(site[k])+'_bottTEMPERATUREassimulation.png')
     plt.savefig(outputplotdir+'fig13'+aorb+'_'+str(site[k])+'_bottTEMPERATUREassimulation.eps')

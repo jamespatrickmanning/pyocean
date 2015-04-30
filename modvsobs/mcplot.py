@@ -23,44 +23,44 @@ else:
 df=pd.read_csv(inputdir+'AB01botttemp_mc_mod.csv',sep=',',index_col=1,names=['yy','mm','dd','count','mean','median','min','max','std'])
 fig=plt.figure(figsize=(15,10))
 ax=fig.add_subplot(311)
-ax.plot(df.index,df['mean'].values,'--',color=color1)
+ax.errorbar(df.index,df['mean'].values,df['std'].values,linestyle='--',color=color1)
 df00=pd.read_csv(inputdir+'AB01botttemp_mc_obs.csv',sep=',',index_col=1,names=['yy','mm','dd','count','mean','median','min','max','std'])
-ax.plot(df00.index,df00['mean'].values,color=color2)
+ax.errorbar(df00.index,df00['mean'].values,df00['std'].values,color=color2,elinewidth=5)
 #ax.set_ylabel('Monthly Mean Temperature')
 #ax.set_title('Bottom Monthly Mean Temperature')
 for i in range(len(ax.lines)):#plot in different ways
      ax.lines[i].set_linewidth(4)
 plt.figtext(.5,.92,' Monthly Mean Temperature ', fontsize=18, ha='center')
 ax.text(.5, 12.5, 'AB01', style='italic',fontsize=20,
-        bbox={'facecolor':'yellow', 'alpha':3.5, 'pad':30})
+        bbox={'facecolor':'white', 'alpha':3.5, 'pad':30})
 ax.grid(True)
 plt.legend(['modeled','observed'],loc='upper right', bbox_to_anchor=(1.01, 1.20),
           ncol=3, fancybox=True, shadow=True)
-
+plt.setp(ax.get_xticklabels(), visible=False)
 ##########BN01 site#################
 
 df1=pd.read_csv(inputdir+'BN01botttemp_mc_mod.csv',sep=',',index_col=1,names=['yy','mm','dd','count','mean','median','min','max','std'])
 ax1=fig.add_subplot(312,sharex=ax)
 ax1.text(.5, 8.5, 'BN01', style='italic',fontsize=20,
-        bbox={'facecolor':'yellow','alpha':3.5, 'pad':30})
-ax1.plot(df1.index,df1['mean'].values,'--',color=color1)
+        bbox={'facecolor':'white','alpha':3.5, 'pad':30})
+ax1.errorbar(df1.index,df1['mean'].values,df1['std'].values,linestyle='--',color=color1)
 df11=pd.read_csv(inputdir+'BN01botttemp_mc_obs.csv',sep=',',index_col=1,names=['yy','mm','dd','count','mean','median','min','max','std'])
-ax1.plot(df11.index,df11['mean'].values,color=color2)
+ax1.errorbar(df11.index,df11['mean'].values,df11['std'].values,color=color2,elinewidth=5)
 for i in range(len(ax1.lines)):#plot in different ways
      ax1.lines[i].set_linewidth(4)
 ax1.set_ylabel('Monthly Mean Temperature',fontsize=20)
 #ax1.set_title('BN01 site monthly mean temperature')
 ax1.grid(True)
-
+plt.setp(ax1.get_xticklabels(), visible=False)
 ##########JS06 site#################
 
 df2=pd.read_csv(inputdir+'JS06botttemp_mc_mod.csv',sep=',',index_col=1,names=['yy','mm','dd','count','mean','median','min','max','std'])
 ax2=fig.add_subplot(313,sharex=ax)
-ax2.text(.5, 7.5, 'JS06', style='italic',fontsize=20,
-        bbox={'facecolor':'yellow','alpha':3.5, 'pad':30})
-ax2.plot(df2.index,df2['mean'].values,'--',color=color1)
+ax2.text(.5, 7.2, 'JS06', style='italic',fontsize=20,
+        bbox={'facecolor':'white','alpha':3.5, 'pad':30})
+ax2.errorbar(df2.index,df2['mean'].values,df2['std'].values,linestyle='--',color=color1)
 df22=pd.read_csv(inputdir+'JS06botttemp_mc_obs.csv',sep=',',index_col=1,names=['yy','mm','dd','count','mean','median','min','max','std'])
-ax2.plot(df22.index,df22['mean'].values,color=color2)
+ax2.errorbar(df22.index,df22['mean'].values,df22['std'].values,color=color2,elinewidth=5)
 #ax2.set_ylabel('Monthly Mean Salinity')
 #ax2.set_title('Bottom Monthly Mean Salinity at TA15')
 for i in range(len(ax2.lines)):#plot in different ways
@@ -69,9 +69,9 @@ ax2.grid(True)
 ax2.set_xlabel('Month')
 #plt.setp(ax1.get_xticklabels(),visible=False)
 #plt.setp(ax.get_xticklabels(),visible=False)
-ax.tick_params(axis='both', which='major', labelsize=15)
+#ax2.tick_params(axis='both', which='major', labelsize=15)
 #ax1.tick_params(axis='both', which='major', labelsize=15)
-plt.tick_params(axis='both', which='major', labelsize=15)
+plt.tick_params(axis='x', which='major', labelsize=20)
 
 plt.show()
 plt.savefig('/net/nwebserver/epd/ocean/MainPage/modvsobs/figs/fig4_3sites_mthly.png')
